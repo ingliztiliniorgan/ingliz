@@ -171,16 +171,16 @@
   font-weight: 600;
   transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
   box-shadow: 0 10px 30px -12px color-mix(in oklch, var(--primary) 60%, transparent);
+  &:hover { transform: translateY(-1px); opacity: 0.95; }
 }
-@utility btn-primary:hover { transform: translateY(-1px); opacity: 0.95; }
 @utility btn-ghost {
   background-color: transparent;
   color: var(--foreground);
   padding: 0.6rem 1rem;
   border-radius: var(--radius);
   border: 1px solid var(--border);
+  &:hover { background-color: var(--accent); }
 }
-@utility btn-ghost:hover { background-color: var(--accent); }
 @utility card-surface {
   background-color: var(--card);
   color: var(--card-foreground);

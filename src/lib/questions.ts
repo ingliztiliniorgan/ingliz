@@ -142,8 +142,9 @@ export const QUESTIONS: QItem[] = [
 export function pickQuestion(
   desiredDifficulty: 1 | 2 | 3 | 4 | 5,
   used: Set<string>,
+  opts?: { topicFilter?: (topic: string | undefined) => boolean },
 ): QItem | null {
-  // Avval o'sha darajadan qidiramiz, keyin qo'shni darajalar
+  const filt = opts?.topicFilter ?? (() => true);
   const order = [
     desiredDifficulty,
     Math.max(1, desiredDifficulty - 1),
@@ -152,10 +153,15 @@ export function pickQuestion(
     Math.min(5, desiredDifficulty + 2),
   ];
   for (const d of order) {
-    const pool = QUESTIONS.filter((q) => q.difficulty === d && !used.has(q.id));
+    const pool = QUESTIONS.filter((q) => q.difficulty === d && !used.has(q.id) && filt(q.topic));
     if (pool.length > 0) return pool[Math.floor(Math.random() * pool.length)];
   }
-  const rest = QUESTIONS.filter((q) => !used.has(q.id));
-  if (rest.length === 0) return null;
+  const rest = QUESTIONS.filter((q) => !used.has(q.id) && filt(q.topic));
+  if (rest.length === 0) {
+    // fallback: any question at desired difficulty ignoring filter
+    const any = QUESTIONS.filter((q) => !used.has(q.id));
+    if (any.length === 0) return null;
+    return any[Math.floor(Math.random() * any.length)];
+  }
   return rest[Math.floor(Math.random() * rest.length)];
 }

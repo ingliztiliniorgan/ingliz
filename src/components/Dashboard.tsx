@@ -19,12 +19,13 @@ export default function Dashboard({ profile, onStartLearning, onOpenMistakes, on
     updateProfile({ theme: dark ? "dark" : "light" });
   }, [dark]);
 
+  const name = profile.name ?? "";
   const greeting =
     band === "kid"
-      ? `Salom, super o'quvchi! 🌟`
+      ? `Salom, ${name}! 🌟`
       : band === "teen"
-      ? `Hey, ${profile.gender === "female" ? "qiz" : "yigit"}! Ketdik 🚀`
-      : `Xush kelibsiz`;
+      ? `Hey, ${name}! Ketdik 🚀`
+      : `Assalomu alaykum, ${name}`;
 
   const mistakesCount = profile.mistakes?.length ?? 0;
 
@@ -39,7 +40,6 @@ export default function Dashboard({ profile, onStartLearning, onOpenMistakes, on
           onClick={() => setDark((v) => !v)}
           className="btn-ghost text-sm"
           aria-label="Rejimni almashtirish"
-          title="Rejimni almashtirish"
         >
           {dark ? "☀️ Kunduz" : "🌙 Tun"}
         </button>
@@ -82,7 +82,7 @@ export default function Dashboard({ profile, onStartLearning, onOpenMistakes, on
               O'rganishni boshlash
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Adaptiv AI-mashqlar. Har xato uchun 1 jumlali o'zbekcha izoh. Sizning yoshingiz va sohangizga moslashtirilgan misollar.
+              AI-yordamli darslar. Yoshingiz va tanlagan mavzuga moslashtirilgan misollar, izohlar va flashcardlar.
             </p>
             <button onClick={onStartLearning} className="btn-primary mt-6">
               🚀 Boshlash
@@ -100,13 +100,14 @@ export default function Dashboard({ profile, onStartLearning, onOpenMistakes, on
         <div className="card-surface p-5">
           <div className="text-lg font-semibold">Placement ni qayta yechish</div>
           <p className="text-sm text-muted-foreground mt-1">
-            Darajangiz o'zgardi deb o'ylaysizmi? 100 savolli testni qayta yeching.
+            Darajangiz o'zgardi deb o'ylaysizmi? Testni qayta yeching.
           </p>
           <button onClick={onRetakePlacement} className="btn-ghost mt-3">Qayta yechish</button>
         </div>
         <div className="card-surface p-5">
           <div className="text-lg font-semibold">Sizning profil</div>
           <ul className="text-sm text-muted-foreground mt-1 space-y-1">
+            <li>Ism: {profile.name}</li>
             <li>Jins: {profile.gender === "female" ? "Ayol" : "Erkak"}</li>
             <li>Yosh: {profile.age}</li>
             <li>Boshlang'ich daraja: {profile.levelChosen}</li>

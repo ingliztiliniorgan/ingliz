@@ -2,22 +2,47 @@ import { useState } from "react";
 import type { Gender } from "@/lib/types";
 
 interface Props {
-  onComplete: (data: { gender: Gender; age: number }) => void;
+  onComplete: (data: { name: string; gender: Gender; age: number }) => void;
 }
 
 export default function OnboardingProfile({ onComplete }: Props) {
-  const [step, setStep] = useState<0 | 1>(0);
+  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [name, setName] = useState("");
   const [gender, setGender] = useState<Gender | null>(null);
   const [age, setAge] = useState<number>(16);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="card-surface max-w-md w-full p-8">
-        {step === 0 ? (
+        {step === 0 && (
           <>
-            <h2 className="text-2xl font-bold text-center">Siz kimsiz?</h2>
+            <h2 className="text-2xl font-bold text-center">Ismingiz nima?</h2>
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              Ilova sizga mos ravishda ko'rinishga kelsin.
+              Sizga shu ism bilan murojaat qilamiz.
+            </p>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Masalan, Aziz"
+              className="mt-6 w-full rounded-2xl border p-4 text-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              autoFocus
+            />
+            <button
+              className="btn-primary w-full mt-6 disabled:opacity-40"
+              disabled={name.trim().length < 2}
+              onClick={() => setStep(1)}
+            >
+              Keyingi →
+            </button>
+          </>
+        )}
+
+        {step === 1 && (
+          <>
+            <h2 className="text-2xl font-bold text-center">Siz kimsiz, {name}?</h2>
+            <p className="mt-2 text-center text-sm text-muted-foreground">
+              Ilova sizga mos ko'rinishga kelsin.
             </p>
             <div className="mt-6 grid grid-cols-2 gap-3">
               <button
@@ -39,15 +64,20 @@ export default function OnboardingProfile({ onComplete }: Props) {
                 <div className="mt-2 font-semibold">Ayol</div>
               </button>
             </div>
-            <button
-              className="btn-primary w-full mt-6 disabled:opacity-40"
-              disabled={!gender}
-              onClick={() => setStep(1)}
-            >
-              Keyingi →
-            </button>
+            <div className="grid grid-cols-2 gap-3 mt-6">
+              <button onClick={() => setStep(0)} className="btn-ghost">← Orqaga</button>
+              <button
+                className="btn-primary disabled:opacity-40"
+                disabled={!gender}
+                onClick={() => setStep(2)}
+              >
+                Keyingi →
+              </button>
+            </div>
           </>
-        ) : (
+        )}
+
+        {step === 2 && (
           <>
             <h2 className="text-2xl font-bold text-center">Yoshingiz nechada?</h2>
             <p className="mt-2 text-center text-sm text-muted-foreground">
@@ -66,9 +96,9 @@ export default function OnboardingProfile({ onComplete }: Props) {
               <div className="text-xs text-muted-foreground mt-1">5 – 80</div>
             </div>
             <div className="grid grid-cols-2 gap-3 mt-6">
-              <button onClick={() => setStep(0)} className="btn-ghost">← Orqaga</button>
+              <button onClick={() => setStep(1)} className="btn-ghost">← Orqaga</button>
               <button
-                onClick={() => gender && onComplete({ gender, age })}
+                onClick={() => gender && onComplete({ name: name.trim(), gender, age })}
                 className="btn-primary"
               >
                 Boshlash

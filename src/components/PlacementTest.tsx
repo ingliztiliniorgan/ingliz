@@ -6,6 +6,7 @@ import { addMistake } from "@/lib/profile";
 interface Props {
   startLevel: LevelName;
   totalQuestions?: number;
+  age?: number;
   onFinish: (result: { score: number; correct: number; total: number; stars: number }) => void;
   onExit: () => void;
 }
@@ -22,7 +23,13 @@ const floorDifficulty: Record<LevelName, 1 | 2 | 3 | 4 | 5> = {
   yaxshi: 3,
 };
 
-export default function PlacementTest({ startLevel, totalQuestions = 100, onFinish, onExit }: Props) {
+export default function PlacementTest({
+  startLevel,
+  totalQuestions = 20,
+  age,
+  onFinish,
+  onExit,
+}: Props) {
   const [difficulty, setDifficulty] = useState<1 | 2 | 3 | 4 | 5>(startDifficulty[startLevel]);
   const [used] = useState<Set<string>>(() => new Set());
   const [current, setCurrent] = useState<QItem | null>(null);
@@ -33,8 +40,15 @@ export default function PlacementTest({ startLevel, totalQuestions = 100, onFini
   const [showWhy, setShowWhy] = useState(false);
   const floor = floorDifficulty[startLevel];
 
+  // Yosh bola + past daraja: faqat vocab/numbers/pronoun kabi oson mavzular
+  const kidBeginner = (age ?? 99) <= 10 && startLevel === "past";
+  const easyTopics = new Set(["vocab", "numbers", "pronoun", "articles", "be", "have", "question"]);
+  const topicFilter = kidBeginner
+    ? (t: string | undefined) => (t ? easyTopics.has(t) : false)
+    : undefined;
+
   useEffect(() => {
-    const q = pickQuestion(difficulty, used);
+    const q = pickQuestion(difficulty, used, { topicFilter });
     if (q) {
       used.add(q.id);
       setCurrent(q);
@@ -51,23 +65,19 @@ export default function PlacementTest({ startLevel, totalQuestions = 100, onFini
     setAnswer(i);
     const isRight = i === current.answerIndex;
     let nextStreak = isRight ? streak + 1 : 0;
-    let newCorrect = correct + (isRight ? 1 : 0);
+    const newCorrect = correct + (isRight ? 1 : 0);
 
-    // Adaptive algorithm:
-    // - to'g'ri 2 marta ketma-ket → qiyinlikni +1
-    // - noto'g'ri → foydalanuvchi tanlagan floor dan pastga tushmaydi
     let nextDiff: 1 | 2 | 3 | 4 | 5 = difficulty;
     if (isRight && nextStreak >= 2 && difficulty < 5) {
       nextDiff = (difficulty + 1) as 1 | 2 | 3 | 4 | 5;
       nextStreak = 0;
     } else if (!isRight) {
-      // faqat past darajani tanlagan foydalanuvchida savol biroz pasayishi mumkin
       if (startLevel === "past" && difficulty > floor) {
         nextDiff = (difficulty - 1) as 1 | 2 | 3 | 4 | 5;
       }
-      // Orta / Yaxshi tanlagan bo'lsa — pastga tushmaymiz (floor da qolamiz)
     }
     if (nextDiff < floor) nextDiff = floor;
+    if (kidBeginner && nextDiff > 2) nextDiff = 2;
 
     if (!isRight) {
       addMistake({
@@ -82,11 +92,9 @@ export default function PlacementTest({ startLevel, totalQuestions = 100, onFini
     setCorrect(newCorrect);
     setDifficulty(nextDiff);
 
-    // Keyingi savolga o'tishni foydalanuvchiga ozgina vaqt bering
     setTimeout(() => {
       if (index + 1 >= totalQuestions || used.size >= QUESTIONS.length) {
         const score = Math.round((newCorrect / (index + 1)) * 100);
-        // 5 ballik: 0-19 → 1, 20-39 → 2, ...
         const stars = Math.max(1, Math.min(5, Math.ceil(score / 20)));
         onFinish({ score, correct: newCorrect, total: index + 1, stars });
       } else {

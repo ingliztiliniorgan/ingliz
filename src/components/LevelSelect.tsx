@@ -24,7 +24,7 @@ export default function LevelSelect({ onStart }: Props) {
             Ingliz tilini haqiqatan o'rganamiz
           </h1>
           <p className="mt-3 text-muted-foreground">
-            Boshlash uchun darajangizni tanlang. Keyin 100 ta adaptiv savol yechasiz — sizga qanchalik oson kelsa, savollar o'sha zahoti murakkablashadi.
+            Boshlash uchun darajangizni tanlang. Keyingi qadamda nechta savol yechishni o'zingiz tanlaysiz — sizga qanchalik oson kelsa, savollar o'sha zahoti murakkablashadi.
           </p>
         </div>
 
@@ -53,7 +53,7 @@ export default function LevelSelect({ onStart }: Props) {
             disabled={!choice}
             onClick={() => choice && onStart(choice)}
           >
-            100 savolli testni boshlash
+            Davom etish →
           </button>
         </div>
       </div>

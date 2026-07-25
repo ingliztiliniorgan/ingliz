@@ -87,64 +87,78 @@
   --brand-2: oklch(0.78 0.18 195);
 }
 
-/* Bola (kid) — yorqin, quvnoq */
+/* ---------- Age band: KID (playful, huge, cartoonish) ---------- */
 :root[data-age-band="kid"] {
-  --radius: 1.5rem;
+  --radius: 1.75rem;
+  --font-app: "Fredoka", "Nunito", ui-sans-serif, system-ui, sans-serif;
   --primary: oklch(0.72 0.2 30);
-  --brand: oklch(0.75 0.2 40);
-  --brand-2: oklch(0.8 0.2 150);
+  --brand: oklch(0.78 0.2 55);
+  --brand-2: oklch(0.82 0.2 150);
   --accent: oklch(0.94 0.1 90);
   --background: oklch(0.99 0.03 90);
+  --foreground: oklch(0.22 0.05 30);
+  --card: oklch(1 0.01 90);
+  --border: oklch(0.85 0.12 60);
 }
 :root[data-age-band="kid"][data-gender="female"] {
   --primary: oklch(0.72 0.2 350);
-  --brand: oklch(0.78 0.2 340);
-  --brand-2: oklch(0.82 0.15 320);
+  --brand: oklch(0.8 0.22 340);
+  --brand-2: oklch(0.85 0.18 300);
   --accent: oklch(0.95 0.08 340);
-  --background: oklch(0.99 0.02 340);
+  --background: oklch(0.99 0.03 340);
+  --border: oklch(0.85 0.12 340);
 }
 :root[data-age-band="kid"][data-gender="male"] {
   --primary: oklch(0.65 0.2 230);
-  --brand: oklch(0.7 0.2 220);
-  --brand-2: oklch(0.78 0.18 190);
+  --brand: oklch(0.72 0.22 220);
+  --brand-2: oklch(0.8 0.2 170);
   --accent: oklch(0.94 0.08 220);
-  --background: oklch(0.98 0.02 220);
+  --background: oklch(0.98 0.03 220);
+  --border: oklch(0.85 0.12 220);
 }
 
-/* O'smir (teen) — jonli, zamonaviy */
+/* ---------- Age band: TEEN (bold, modern, vibrant) ---------- */
 :root[data-age-band="teen"] {
-  --radius: 1rem;
-  --primary: oklch(0.62 0.22 280);
-  --brand: oklch(0.68 0.22 290);
-  --brand-2: oklch(0.72 0.2 180);
+  --radius: 1.1rem;
+  --font-app: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --primary: oklch(0.62 0.24 285);
+  --brand: oklch(0.68 0.24 300);
+  --brand-2: oklch(0.72 0.22 180);
+  --background: oklch(0.99 0.01 280);
 }
 :root[data-age-band="teen"][data-gender="female"] {
-  --primary: oklch(0.65 0.22 320);
-  --brand: oklch(0.7 0.22 330);
-  --brand-2: oklch(0.75 0.2 290);
+  --primary: oklch(0.65 0.24 320);
+  --brand: oklch(0.7 0.24 335);
+  --brand-2: oklch(0.75 0.22 285);
 }
 :root[data-age-band="teen"][data-gender="male"] {
-  --primary: oklch(0.55 0.22 250);
-  --brand: oklch(0.6 0.22 260);
-  --brand-2: oklch(0.7 0.2 200);
+  --primary: oklch(0.55 0.24 255);
+  --brand: oklch(0.6 0.24 265);
+  --brand-2: oklch(0.7 0.22 195);
 }
 
-/* Katta (adult) — vazmin, professional */
+/* ---------- Age band: ADULT (calm, serious, editorial) ---------- */
 :root[data-age-band="adult"] {
-  --radius: 0.75rem;
-  --primary: oklch(0.45 0.15 260);
-  --brand: oklch(0.5 0.15 260);
-  --brand-2: oklch(0.55 0.12 220);
+  --radius: 0.5rem;
+  --font-app: "Source Serif 4", "Georgia", ui-serif, serif;
+  --primary: oklch(0.35 0.08 250);
+  --brand: oklch(0.4 0.08 250);
+  --brand-2: oklch(0.5 0.07 220);
+  --background: oklch(0.98 0.005 260);
+  --foreground: oklch(0.18 0.02 260);
+  --card: oklch(1 0 0);
+  --border: oklch(0.88 0.01 260);
+  --accent: oklch(0.94 0.01 260);
 }
 :root[data-age-band="adult"][data-gender="female"] {
-  --primary: oklch(0.5 0.16 350);
-  --brand: oklch(0.55 0.15 350);
-  --brand-2: oklch(0.6 0.13 320);
+  --primary: oklch(0.38 0.1 350);
+  --brand: oklch(0.42 0.1 350);
+  --brand-2: oklch(0.5 0.08 320);
 }
 :root[data-age-band="adult"][data-gender="male"] {
-  --primary: oklch(0.4 0.1 250);
-  --brand: oklch(0.45 0.12 250);
-  --brand-2: oklch(0.55 0.1 220);
+  --primary: oklch(0.3 0.05 250);
+  --brand: oklch(0.35 0.06 250);
+  --brand-2: oklch(0.45 0.05 220);
 }
 
 @layer base {
@@ -157,9 +171,35 @@
   }
   :root[data-age-band="kid"] body {
     background-image:
-      radial-gradient(circle at 10% 10%, oklch(0.95 0.15 60 / 0.4), transparent 40%),
-      radial-gradient(circle at 90% 20%, oklch(0.9 0.18 320 / 0.35), transparent 40%),
-      radial-gradient(circle at 50% 90%, oklch(0.92 0.16 180 / 0.35), transparent 45%);
+      radial-gradient(circle at 10% 10%, oklch(0.95 0.2 60 / 0.55), transparent 40%),
+      radial-gradient(circle at 90% 20%, oklch(0.9 0.2 320 / 0.5), transparent 40%),
+      radial-gradient(circle at 50% 90%, oklch(0.92 0.2 180 / 0.5), transparent 45%);
+  }
+  :root[data-age-band="kid"] h1,
+  :root[data-age-band="kid"] h2 {
+    letter-spacing: -0.01em;
+    font-weight: 700;
+  }
+  :root[data-age-band="teen"] body {
+    background-image:
+      radial-gradient(circle at 85% 0%, oklch(0.6 0.24 300 / 0.18), transparent 45%),
+      radial-gradient(circle at 0% 100%, oklch(0.65 0.22 200 / 0.15), transparent 50%);
+  }
+  :root[data-age-band="teen"] h1,
+  :root[data-age-band="teen"] h2 {
+    letter-spacing: -0.03em;
+    font-weight: 700;
+  }
+  :root[data-age-band="adult"] body {
+    background-image: none;
+  }
+  :root[data-age-band="adult"] h1,
+  :root[data-age-band="adult"] h2 {
+    letter-spacing: -0.015em;
+    font-weight: 600;
+  }
+  :root[data-age-band="adult"] .card-surface {
+    box-shadow: 0 1px 3px oklch(0.2 0.02 260 / 0.06);
   }
 }
 

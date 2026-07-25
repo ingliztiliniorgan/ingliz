@@ -2,16 +2,20 @@ export type Gender = "male" | "female";
 export type LevelName = "past" | "orta" | "yaxshi";
 
 export interface Profile {
+  name?: string;
   gender?: Gender;
   age?: number;
   levelChosen?: LevelName;
-  placementScore?: number; // 0-100
-  placementStars?: number; // 0-5
+  placementScore?: number;
+  placementStars?: number;
+  placementCount?: number;
   streak?: number;
-  lastVisit?: string; // ISO date
+  lastVisit?: string;
   mistakes?: MistakeItem[];
   theme?: "light" | "dark";
-  onboardedProfile?: boolean; // gender+age done
+  onboardedProfile?: boolean;
+  linnyIntroSeen?: boolean;
+  learnedWords?: string[];
 }
 
 export interface MistakeItem {
@@ -21,13 +25,21 @@ export interface MistakeItem {
   at: string;
 }
 
-// difficulty: 1 = eng oson, 5 = eng qiyin
 export interface QItem {
   id: string;
-  q: string; // savol matni (o'zbekcha izoh + inglizcha bo'sh joyli gap)
+  q: string;
   choices: string[];
   answerIndex: number;
-  explanation: string; // "Nega?" tugmasi uchun
+  explanation: string;
   difficulty: 1 | 2 | 3 | 4 | 5;
   topic?: string;
+}
+
+export interface FlashcardItem {
+  word: string;
+  translation: string;
+  emoji?: string;
+  example: string;
+  exampleUz: string;
+  pronunciation: string;
 }

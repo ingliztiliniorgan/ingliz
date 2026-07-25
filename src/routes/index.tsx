@@ -10,6 +10,7 @@ import OnboardingProfile from "@/components/OnboardingProfile";
 import Dashboard from "@/components/Dashboard";
 import LearningSession from "@/components/LearningSession";
 import MistakesReview from "@/components/MistakesReview";
+import TestCountSelect from "@/components/TestCountSelect";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,13 +19,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Adaptiv 100 savolli placement test, yoshga moslashadigan darslar, xatolar sandig'i va streak — inglizchani nol darajadan boshlab jonli suhbatga qadar o'rganing.",
+          "Adaptiv AI test, yoshga moslashadigan darslar, xatolar sandig'i va streak — inglizchani nol darajadan jonli suhbatga qadar o'rganing.",
       },
       { property: "og:title", content: "Linny — Ingliz tilini o'rganish" },
       {
         property: "og:description",
         content:
-          "AI-yordamli, yosh va jinsga moslashadigan ingliz tili trenajyori. 100 savolli placement, adaptiv darslar.",
+          "AI-yordamli, yosh va jinsga moslashadigan ingliz tili trenajyori. Tanlagan mavzuda 10-100 savolli adaptiv test.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/")({
 type View =
   | "onboardProfile"
   | "levelSelect"
+  | "count"
   | "test"
   | "results"
   | "dashboard"
@@ -45,6 +47,7 @@ type View =
 function HomePage() {
   const [profile, setProfile] = useState<Profile>({});
   const [view, setView] = useState<View>("onboardProfile");
+  const [testCount, setTestCount] = useState<number>(20);
   const [lastResult, setLastResult] = useState<{
     score: number;
     correct: number;
@@ -52,19 +55,18 @@ function HomePage() {
     stars: number;
   } | null>(null);
 
-  // Hydrate from localStorage after mount (SSR-safe)
   useEffect(() => {
     const p = bumpStreak() ?? loadProfile();
     setProfile(p);
     applyDesignFor(p.gender, p.age);
     if (p.theme === "dark") document.documentElement.classList.add("dark");
-    if (!p.onboardedProfile || !p.gender || !p.age) setView("onboardProfile");
+    if (!p.onboardedProfile || !p.gender || !p.age || !p.name) setView("onboardProfile");
     else if (!p.levelChosen) setView("levelSelect");
     else if (typeof p.placementScore !== "number") setView("levelSelect");
     else setView("dashboard");
   }, []);
 
-  function handleProfile(data: { gender: "male" | "female"; age: number }) {
+  function handleProfile(data: { name: string; gender: "male" | "female"; age: number }) {
     const p = updateProfile({ ...data, onboardedProfile: true });
     setProfile(p);
     applyDesignFor(p.gender, p.age);
@@ -74,12 +76,16 @@ function HomePage() {
   function handleLevel(level: LevelName) {
     const p = updateProfile({ levelChosen: level });
     setProfile(p);
-    setView("test");
+    setView("count");
   }
 
   function handleFinishTest(result: { score: number; correct: number; total: number; stars: number }) {
     setLastResult(result);
-    const p = updateProfile({ placementScore: result.score, placementStars: result.stars });
+    const p = updateProfile({
+      placementScore: result.score,
+      placementStars: result.stars,
+      placementCount: result.total,
+    });
     setProfile(p);
     setView("results");
   }
@@ -88,19 +94,29 @@ function HomePage() {
     <>
       {view === "onboardProfile" && <OnboardingProfile onComplete={handleProfile} />}
       {view === "levelSelect" && <LevelSelect onStart={handleLevel} />}
+      {view === "count" && (
+        <TestCountSelect
+          onStart={(n) => {
+            setTestCount(n);
+            setView("test");
+          }}
+          onBack={() => setView("levelSelect")}
+        />
+      )}
       {view === "test" && profile.levelChosen && (
         <PlacementTest
           startLevel={profile.levelChosen}
-          totalQuestions={100}
+          totalQuestions={testCount}
+          age={profile.age}
           onFinish={handleFinishTest}
-          onExit={() => setView("levelSelect")}
+          onExit={() => setView("count")}
         />
       )}
       {view === "results" && lastResult && (
         <TestResults
           result={lastResult}
           onContinue={() => setView("dashboard")}
-          onRetry={() => setView("test")}
+          onRetry={() => setView("count")}
           onExit={() => setView("levelSelect")}
         />
       )}

@@ -59,9 +59,14 @@ export default function AIQuiz({ profile, defaultTopic, askTopic = true, skill =
     }
   }
 
-  if (!askTopic && stage === "loading" && items.length === 0 && !error) {
-    load(defaultTopic ?? "general English");
-  }
+  const autoLoadedRef = useRef(false);
+  useEffect(() => {
+    if (!askTopic && !autoLoadedRef.current) {
+      autoLoadedRef.current = true;
+      load(defaultTopic ?? "general English");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (stage === "input") {
     return (

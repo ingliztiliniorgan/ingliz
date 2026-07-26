@@ -14,7 +14,144 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      daily_progress: {
+        Row: {
+          day: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          day: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          day?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      learned_words: {
+        Row: {
+          created_at: string
+          id: string
+          translation: string | null
+          user_id: string
+          word: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          translation?: string | null
+          user_id: string
+          word: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          translation?: string | null
+          user_id?: string
+          word?: string
+        }
+        Relationships: []
+      }
+      mistakes: {
+        Row: {
+          correct_answer: string
+          created_at: string
+          explanation: string | null
+          id: string
+          question: string
+          skill: string | null
+          tag: string | null
+          user_id: string
+          wrong_answer: string | null
+        }
+        Insert: {
+          correct_answer: string
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          question: string
+          skill?: string | null
+          tag?: string | null
+          user_id: string
+          wrong_answer?: string | null
+        }
+        Update: {
+          correct_answer?: string
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          question?: string
+          skill?: string | null
+          tag?: string | null
+          user_id?: string
+          wrong_answer?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          age: number | null
+          best_streak: number
+          created_at: string
+          difficulty: string
+          gender: string | null
+          last_visit: string | null
+          level_chosen: string | null
+          linny_intro_seen: boolean
+          name: string | null
+          onboarded: boolean
+          placement_count: number | null
+          placement_score: number | null
+          placement_stars: number | null
+          streak: number
+          theme: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age?: number | null
+          best_streak?: number
+          created_at?: string
+          difficulty?: string
+          gender?: string | null
+          last_visit?: string | null
+          level_chosen?: string | null
+          linny_intro_seen?: boolean
+          name?: string | null
+          onboarded?: boolean
+          placement_count?: number | null
+          placement_score?: number | null
+          placement_stars?: number | null
+          streak?: number
+          theme?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age?: number | null
+          best_streak?: number
+          created_at?: string
+          difficulty?: string
+          gender?: string | null
+          last_visit?: string | null
+          level_chosen?: string | null
+          linny_intro_seen?: boolean
+          name?: string | null
+          onboarded?: boolean
+          placement_count?: number | null
+          placement_score?: number | null
+          placement_stars?: number | null
+          streak?: number
+          theme?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

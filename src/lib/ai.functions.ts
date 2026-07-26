@@ -308,6 +308,21 @@ JSON: {"summary":"1-2 gap o'zbekcha xulosa", "lineByLine":[{"en":"...","uz":"...
   });
 
 // Daily challenge — 3 mixed mini-tasks
+const DailyTaskSchema = z.object({
+  type: z.enum(["quiz", "translate", "match"]),
+  q: z.string().optional(),
+  choices: z.array(z.string()).optional(),
+  answerIndex: z.number().int().optional(),
+  explanation: z.string().optional(),
+  source: z.string().optional(),
+  direction: z.enum(["uz-en", "en-uz"]).optional(),
+  ideal: z.string().optional(),
+  word: z.string().optional(),
+  translation: z.string().optional(),
+  example: z.string().optional(),
+});
+export type DailyTask = z.infer<typeof DailyTaskSchema>;
+
 export const genDailyChallenge = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.object({ age: z.number().int(), level: z.enum(["past", "orta", "yaxshi"]) }).parse(d),
@@ -321,13 +336,11 @@ JSON: {"tasks":[
  {"type":"translate","source":"...","direction":"uz-en","ideal":"..."},
  {"type":"match","word":"...","translation":"...","example":"..."}
 ]}`;
-    const Schema = z.object({
-      tasks: z.array(z.any()),
-    });
+    const Schema = z.object({ tasks: z.array(DailyTaskSchema) });
     const { output } = await generateText({
       model: gw(MODEL),
       output: Output.object({ schema: Schema }),
       prompt,
     });
-    return output.tasks as Array<Record<string, unknown>>;
+    return output.tasks;
   });

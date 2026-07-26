@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { genDailyChallenge, gradeTranslation } from "@/lib/ai.functions";
+import { genDailyChallenge, gradeTranslation, type DailyTask } from "@/lib/ai.functions";
 import type { Profile } from "@/lib/types";
 import { updateProfile } from "@/lib/profile";
 
@@ -9,7 +9,7 @@ interface Props { profile: Profile; onBack: () => void }
 export default function DailyChallenge({ profile, onBack }: Props) {
   const gen = useServerFn(genDailyChallenge);
   const grade = useServerFn(gradeTranslation);
-  const [tasks, setTasks] = useState<any[]>([]); // eslint-disable-line
+  const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [idx, setIdx] = useState(0);
   const [done, setDone] = useState(false);
   const started = useRef(false);

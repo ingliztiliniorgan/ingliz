@@ -51,18 +51,20 @@ export const saveMyProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ProfilePatch.parse(d))
   .handler(async ({ data, context }) => {
-    const row: Record<string, unknown> = { user_id: context.userId };
-    if (data.name !== undefined) row.name = data.name;
-    if (data.gender !== undefined) row.gender = data.gender;
-    if (data.age !== undefined) row.age = data.age;
-    if (data.levelChosen !== undefined) row.level_chosen = data.levelChosen;
-    if (data.placementScore !== undefined) row.placement_score = data.placementScore;
-    if (data.placementStars !== undefined) row.placement_stars = data.placementStars;
-    if (data.placementCount !== undefined) row.placement_count = data.placementCount;
-    if (data.difficulty !== undefined) row.difficulty = data.difficulty;
-    if (data.theme !== undefined) row.theme = data.theme;
-    if (data.onboardedProfile !== undefined) row.onboarded = data.onboardedProfile;
-    if (data.linnyIntroSeen !== undefined) row.linny_intro_seen = data.linnyIntroSeen;
+    const row = {
+      user_id: context.userId,
+      name: data.name,
+      gender: data.gender,
+      age: data.age,
+      level_chosen: data.levelChosen,
+      placement_score: data.placementScore,
+      placement_stars: data.placementStars,
+      placement_count: data.placementCount,
+      difficulty: data.difficulty,
+      theme: data.theme,
+      onboarded: data.onboardedProfile,
+      linny_intro_seen: data.linnyIntroSeen,
+    };
     const { error } = await context.supabase.from("profiles").upsert(row, { onConflict: "user_id" });
     if (error) throw error;
     return { ok: true };

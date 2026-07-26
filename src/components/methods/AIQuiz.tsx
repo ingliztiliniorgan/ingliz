@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { genQuestions } from "@/lib/ai.functions";
 import type { Profile } from "@/lib/types";

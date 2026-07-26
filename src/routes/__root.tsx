@@ -120,11 +120,14 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+import SignOutButton from "@/components/SignOutButton";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
+      <SignOutButton />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>

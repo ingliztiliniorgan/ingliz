@@ -6,13 +6,19 @@ import AIQuiz from "./methods/AIQuiz";
 import RulesMode from "./methods/RulesMode";
 import SkillsMode from "./methods/SkillsMode";
 import Flashcards from "./methods/Flashcards";
+import Spelling from "./methods/Spelling";
+import Translate from "./methods/Translate";
+import Shadowing from "./methods/Shadowing";
+import CodeExplainer from "./methods/CodeExplainer";
 
 interface Props {
   profile: Profile;
   onExit: () => void;
 }
 
-type Method = "quiz" | "rules" | "skills" | "topics" | "flashcards";
+type Method =
+  | "quiz" | "rules" | "skills" | "topics" | "flashcards"
+  | "spelling" | "translate" | "shadowing" | "code";
 
 const methods: { key: Method; title: string; desc: string; emoji: string }[] = [
   { key: "quiz", title: "Savollar orqali", desc: "AI umumiy mavzudan turli savollar beradi", emoji: "❓" },
@@ -20,6 +26,10 @@ const methods: { key: Method; title: string; desc: string; emoji: string }[] = [
   { key: "skills", title: "Ko'nikmalar", desc: "Vocabulary, Grammar, Reading, Speaking", emoji: "🎯" },
   { key: "topics", title: "Mavzular", desc: "O'zingiz mavzu yozing — AI test tuzadi", emoji: "🧭" },
   { key: "flashcards", title: "Flashcards", desc: "Kartochkalar — so'z, tarjima, talaffuz", emoji: "🃏" },
+  { key: "spelling", title: "Yozish", desc: "So'zni to'g'ri yozish mashqi", emoji: "✍️" },
+  { key: "translate", title: "Tarjima", desc: "AI sizning tarjimangizni baholaydi", emoji: "🌍" },
+  { key: "shadowing", title: "Talaffuz (Ovoz)", desc: "Eshiting va takrorlang — AI eshitadi", emoji: "🎧" },
+  { key: "code", title: "Kod / Matn", desc: "Inglizcha kod yoki matnni tushuntiraman", emoji: "💻" },
 ];
 
 const introFor = (p: Profile) => {
@@ -31,9 +41,7 @@ const introFor = (p: Profile) => {
 };
 
 export default function LearningSession({ profile, onExit }: Props) {
-  const [stage, setStage] = useState<"intro" | "method">(
-    profile.linnyIntroSeen ? "method" : "intro",
-  );
+  const [stage, setStage] = useState<"intro" | "method">(profile.linnyIntroSeen ? "method" : "intro");
   const [active, setActive] = useState<Method | null>(null);
 
   function proceedFromIntro() {
@@ -45,9 +53,7 @@ export default function LearningSession({ profile, onExit }: Props) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="card-surface max-w-lg w-full p-8 text-center">
-          <div className="w-20 h-20 mx-auto rounded-full gradient-brand flex items-center justify-center text-4xl">
-            🦉
-          </div>
+          <div className="w-20 h-20 mx-auto rounded-full gradient-brand flex items-center justify-center text-4xl">🦉</div>
           <h2 className="mt-4 text-2xl font-bold">Linny</h2>
           <p className="mt-3 text-muted-foreground">{introFor(profile)}</p>
           <div className="mt-6 grid grid-cols-2 gap-3">
@@ -59,49 +65,30 @@ export default function LearningSession({ profile, onExit }: Props) {
     );
   }
 
-  if (active === "quiz") {
-    return (
-      <AIQuiz
-        profile={profile}
-        askTopic={false}
-        defaultTopic="umumiy ingliz tili"
-        skill="general"
-        title="Savollar orqali"
-        intro=""
-        onBack={() => setActive(null)}
-      />
-    );
-  }
-  if (active === "rules") return <RulesMode profile={profile} onBack={() => setActive(null)} />;
-  if (active === "skills") return <SkillsMode profile={profile} onBack={() => setActive(null)} />;
+  const back = () => setActive(null);
+  if (active === "quiz")
+    return <AIQuiz profile={profile} askTopic={false} defaultTopic="umumiy ingliz tili" skill="general" title="Savollar orqali" intro="" onBack={back} />;
+  if (active === "rules") return <RulesMode profile={profile} onBack={back} />;
+  if (active === "skills") return <SkillsMode profile={profile} onBack={back} />;
   if (active === "topics")
-    return (
-      <AIQuiz
-        profile={profile}
-        askTopic={true}
-        skill="general"
-        title="Mavzular"
-        intro="Istalgan mavzuni yozing (futbol, dasturlash, Photoshop, matematika...) — AI real vaqtda unga mos test tuzadi."
-        onBack={() => setActive(null)}
-      />
-    );
-  if (active === "flashcards") return <Flashcards profile={profile} onBack={() => setActive(null)} />;
+    return <AIQuiz profile={profile} askTopic={true} skill="general" title="Mavzular"
+      intro="Istalgan mavzuni yozing (futbol, dasturlash, Photoshop...) — AI real vaqtda test tuzadi." onBack={back} />;
+  if (active === "flashcards") return <Flashcards profile={profile} onBack={back} />;
+  if (active === "spelling") return <Spelling profile={profile} onBack={back} />;
+  if (active === "translate") return <Translate profile={profile} onBack={back} />;
+  if (active === "shadowing") return <Shadowing profile={profile} onBack={back} />;
+  if (active === "code") return <CodeExplainer profile={profile} onBack={back} />;
 
   return (
     <div className="min-h-screen p-4 md:p-8 max-w-3xl mx-auto">
       <button onClick={onExit} className="btn-ghost text-sm">← Panelga</button>
-      <h2 className="mt-6 text-2xl md:text-3xl font-bold">
-        Ingliz tilini qanday o'rganmoqchisiz?
-      </h2>
+      <h2 className="mt-6 text-2xl md:text-3xl font-bold">Ingliz tilini qanday o'rganmoqchisiz?</h2>
       <p className="text-muted-foreground mt-1">Bittasini tanlang — har biri boshqacha ishlaydi.</p>
 
       <div className="mt-6 grid md:grid-cols-2 gap-3">
         {methods.map((m) => (
-          <button
-            key={m.key}
-            onClick={() => setActive(m.key)}
-            className="card-surface p-4 text-left transition-all hover:-translate-y-0.5"
-          >
+          <button key={m.key} onClick={() => setActive(m.key)}
+            className="card-surface p-4 text-left transition-all hover:-translate-y-0.5">
             <div className="flex items-start gap-3">
               <div className="text-2xl">{m.emoji}</div>
               <div>

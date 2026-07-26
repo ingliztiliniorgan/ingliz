@@ -53,3 +53,13 @@ export function bumpStreak() {
   saveProfile(next);
   return next;
 }
+
+export function mistakesByTag(): Record<string, number> {
+  const p = loadProfile();
+  const map: Record<string, number> = {};
+  for (const m of p.mistakes ?? []) {
+    const t = m.tag ?? "boshqa";
+    map[t] = (map[t] ?? 0) + 1;
+  }
+  return map;
+}

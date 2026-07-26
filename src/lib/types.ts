@@ -1,5 +1,6 @@
 export type Gender = "male" | "female";
 export type LevelName = "past" | "orta" | "yaxshi";
+export type Difficulty = "oson" | "orta" | "qiyin";
 
 export interface Profile {
   name?: string;
@@ -16,6 +17,9 @@ export interface Profile {
   onboardedProfile?: boolean;
   linnyIntroSeen?: boolean;
   learnedWords?: string[];
+  difficulty?: Difficulty;
+  dailyChallengeDate?: string;
+  dailyChallengeDone?: boolean;
 }
 
 export interface MistakeItem {
@@ -23,6 +27,9 @@ export interface MistakeItem {
   wrongAnswer: string;
   correctAnswer: string;
   at: string;
+  tag?: string;
+  question?: string;
+  explanation?: string;
 }
 
 export interface QItem {
@@ -42,4 +49,5 @@ export interface FlashcardItem {
   example: string;
   exampleUz: string;
   pronunciation: string;
+  grammarNote?: string;
 }

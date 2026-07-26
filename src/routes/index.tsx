@@ -11,22 +11,16 @@ import Dashboard from "@/components/Dashboard";
 import LearningSession from "@/components/LearningSession";
 import MistakesReview from "@/components/MistakesReview";
 import TestCountSelect from "@/components/TestCountSelect";
+import DailyChallenge from "@/components/methods/DailyChallenge";
+import { useCloudProfileSync } from "@/hooks/useCloudSync";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Linny — Ingliz tilini o'rganish" },
-      {
-        name: "description",
-        content:
-          "Adaptiv AI test, yoshga moslashadigan darslar, xatolar sandig'i va streak — inglizchani nol darajadan jonli suhbatga qadar o'rganing.",
-      },
+      { name: "description", content: "Adaptiv AI test, yoshga moslashadigan darslar, xatolar sandig'i va streak — inglizchani nol darajadan jonli suhbatga qadar o'rganing." },
       { property: "og:title", content: "Linny — Ingliz tilini o'rganish" },
-      {
-        property: "og:description",
-        content:
-          "AI-yordamli, yosh va jinsga moslashadigan ingliz tili trenajyori. Tanlagan mavzuda 10-100 savolli adaptiv test.",
-      },
+      { property: "og:description", content: "AI-yordamli, yosh va jinsga moslashadigan ingliz tili trenajyori." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -35,25 +29,16 @@ export const Route = createFileRoute("/")({
 });
 
 type View =
-  | "onboardProfile"
-  | "levelSelect"
-  | "count"
-  | "test"
-  | "results"
-  | "dashboard"
-  | "learn"
-  | "mistakes";
+  | "onboardProfile" | "levelSelect" | "count" | "test" | "results"
+  | "dashboard" | "learn" | "mistakes" | "daily";
 
 function HomePage() {
   const [profile, setProfile] = useState<Profile>({});
   const [view, setView] = useState<View>("onboardProfile");
   const [testCount, setTestCount] = useState<number>(20);
-  const [lastResult, setLastResult] = useState<{
-    score: number;
-    correct: number;
-    total: number;
-    stars: number;
-  } | null>(null);
+  const [lastResult, setLastResult] = useState<{ score: number; correct: number; total: number; stars: number } | null>(null);
+
+  useCloudProfileSync(setProfile);
 
   useEffect(() => {
     const p = bumpStreak() ?? loadProfile();
@@ -95,45 +80,29 @@ function HomePage() {
       {view === "onboardProfile" && <OnboardingProfile onComplete={handleProfile} />}
       {view === "levelSelect" && <LevelSelect onStart={handleLevel} />}
       {view === "count" && (
-        <TestCountSelect
-          onStart={(n) => {
-            setTestCount(n);
-            setView("test");
-          }}
-          onBack={() => setView("levelSelect")}
-        />
+        <TestCountSelect onStart={(n) => { setTestCount(n); setView("test"); }} onBack={() => setView("levelSelect")} />
       )}
       {view === "test" && profile.levelChosen && (
-        <PlacementTest
-          startLevel={profile.levelChosen}
-          totalQuestions={testCount}
-          age={profile.age}
-          onFinish={handleFinishTest}
-          onExit={() => setView("count")}
-        />
+        <PlacementTest startLevel={profile.levelChosen} totalQuestions={testCount} age={profile.age}
+          onFinish={handleFinishTest} onExit={() => setView("count")} />
       )}
       {view === "results" && lastResult && (
-        <TestResults
-          result={lastResult}
+        <TestResults result={lastResult}
           onContinue={() => setView("dashboard")}
           onRetry={() => setView("count")}
-          onExit={() => setView("levelSelect")}
-        />
+          onExit={() => setView("levelSelect")} />
       )}
       {view === "dashboard" && (
-        <Dashboard
-          profile={profile}
+        <Dashboard profile={profile}
           onStartLearning={() => setView("learn")}
           onOpenMistakes={() => setView("mistakes")}
           onRetakePlacement={() => setView("levelSelect")}
-        />
+          onDailyChallenge={() => setView("daily")}
+          onProfileChange={setProfile} />
       )}
-      {view === "learn" && (
-        <LearningSession profile={profile} onExit={() => setView("dashboard")} />
-      )}
-      {view === "mistakes" && (
-        <MistakesReview profile={profile} onBack={() => setView("dashboard")} />
-      )}
+      {view === "learn" && <LearningSession profile={profile} onExit={() => setView("dashboard")} />}
+      {view === "mistakes" && <MistakesReview profile={profile} onBack={() => setView("dashboard")} />}
+      {view === "daily" && <DailyChallenge profile={profile} onBack={() => { setProfile(loadProfile()); setView("dashboard"); }} />}
     </>
   );
 }

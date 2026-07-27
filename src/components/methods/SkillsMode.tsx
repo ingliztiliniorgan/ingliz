@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AIQuiz from "./AIQuiz";
+import Vocabulary from "./Vocabulary";
 import type { Profile } from "@/lib/types";
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 type Skill = "vocabulary" | "grammar" | "reading" | "speaking";
 
 const skills: { key: Skill; title: string; desc: string; emoji: string }[] = [
-  { key: "vocabulary", title: "Vocabulary", desc: "Lug'at — yangi so'zlar", emoji: "📚" },
+  { key: "vocabulary", title: "Vocabulary", desc: "Kunlik so'z yodlash tizimi", emoji: "📚" },
   { key: "grammar", title: "Grammar", desc: "Zamon, artikllar, predloglar", emoji: "🧩" },
   { key: "reading", title: "Reading", desc: "Qisqa matn va tushunish", emoji: "📖" },
   { key: "speaking", title: "Speaking", desc: "Talaffuz — qanday o'qiladi", emoji: "🗣️" },
@@ -19,19 +20,21 @@ const skills: { key: Skill; title: string; desc: string; emoji: string }[] = [
 export default function SkillsMode({ profile, onBack }: Props) {
   const [chosen, setChosen] = useState<Skill | null>(null);
 
+  if (chosen === "vocabulary") {
+    return <Vocabulary profile={profile} onBack={() => setChosen(null)} />;
+  }
+
   if (chosen) {
     return (
       <AIQuiz
         profile={profile}
         askTopic={false}
         defaultTopic={
-          chosen === "vocabulary"
-            ? "eng ko'p ishlatiladigan inglizcha so'zlar"
-            : chosen === "grammar"
-              ? "asosiy inglizcha grammatika"
-              : chosen === "reading"
-                ? "qisqa matnni o'qib tushunish"
-                : "so'zlarning to'g'ri talaffuzi"
+          chosen === "grammar"
+            ? "asosiy inglizcha grammatika"
+            : chosen === "reading"
+              ? "qisqa matnni o'qib tushunish"
+              : "so'zlarning to'g'ri talaffuzi"
         }
         skill={chosen}
         title={chosen}

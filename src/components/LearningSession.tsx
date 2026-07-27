@@ -10,6 +10,7 @@ import Spelling from "./methods/Spelling";
 import Translate from "./methods/Translate";
 import Shadowing from "./methods/Shadowing";
 import CodeExplainer from "./methods/CodeExplainer";
+import Vocabulary from "./methods/Vocabulary";
 
 interface Props {
   profile: Profile;
@@ -17,10 +18,11 @@ interface Props {
 }
 
 type Method =
-  | "quiz" | "rules" | "skills" | "topics" | "flashcards"
+  | "vocab" | "quiz" | "rules" | "skills" | "topics" | "flashcards"
   | "spelling" | "translate" | "shadowing" | "code";
 
 const methods: { key: Method; title: string; desc: string; emoji: string }[] = [
+  { key: "vocab", title: "Lug'at (kunlik)", desc: "Kuniga X so'z — yodlash + test tizimi", emoji: "📚" },
   { key: "quiz", title: "Savollar orqali", desc: "AI umumiy mavzudan turli savollar beradi", emoji: "❓" },
   { key: "rules", title: "Qoidalar bo'yicha", desc: "So'z/qoidani misollar bilan tushuntiradi", emoji: "📘" },
   { key: "skills", title: "Ko'nikmalar", desc: "Vocabulary, Grammar, Reading, Speaking", emoji: "🎯" },

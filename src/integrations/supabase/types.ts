@@ -97,6 +97,7 @@ export type Database = {
           age: number | null
           best_streak: number
           created_at: string
+          daily_word_count: number
           difficulty: string
           gender: string | null
           last_visit: string | null
@@ -111,11 +112,15 @@ export type Database = {
           theme: string
           updated_at: string
           user_id: string
+          vocab_last_generated: string | null
+          vocab_last_test_date: string | null
+          vocab_setup_done: boolean
         }
         Insert: {
           age?: number | null
           best_streak?: number
           created_at?: string
+          daily_word_count?: number
           difficulty?: string
           gender?: string | null
           last_visit?: string | null
@@ -130,11 +135,15 @@ export type Database = {
           theme?: string
           updated_at?: string
           user_id: string
+          vocab_last_generated?: string | null
+          vocab_last_test_date?: string | null
+          vocab_setup_done?: boolean
         }
         Update: {
           age?: number | null
           best_streak?: number
           created_at?: string
+          daily_word_count?: number
           difficulty?: string
           gender?: string | null
           last_visit?: string | null
@@ -149,6 +158,60 @@ export type Database = {
           theme?: string
           updated_at?: string
           user_id?: string
+          vocab_last_generated?: string | null
+          vocab_last_test_date?: string | null
+          vocab_setup_done?: boolean
+        }
+        Relationships: []
+      }
+      vocab_words: {
+        Row: {
+          assigned_date: string
+          created_at: string
+          example: string | null
+          example_uz: string | null
+          favorited_at: string | null
+          id: string
+          is_favorite: boolean
+          learned_at: string | null
+          pronunciation: string | null
+          status: string
+          topic: string | null
+          translation: string
+          user_id: string
+          word: string
+        }
+        Insert: {
+          assigned_date: string
+          created_at?: string
+          example?: string | null
+          example_uz?: string | null
+          favorited_at?: string | null
+          id?: string
+          is_favorite?: boolean
+          learned_at?: string | null
+          pronunciation?: string | null
+          status?: string
+          topic?: string | null
+          translation: string
+          user_id: string
+          word: string
+        }
+        Update: {
+          assigned_date?: string
+          created_at?: string
+          example?: string | null
+          example_uz?: string | null
+          favorited_at?: string | null
+          id?: string
+          is_favorite?: boolean
+          learned_at?: string | null
+          pronunciation?: string | null
+          status?: string
+          topic?: string | null
+          translation?: string
+          user_id?: string
+          word?: string
         }
         Relationships: []
       }

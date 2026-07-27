@@ -1,97 +1,110 @@
-Katta yangilanish — quyidagilarni bitta partiyada qo'shamiz. Har biri modul sifatida, mavjud "Linny" tuzilmasiga qo'shiladi.
 
-## 1. Lovable Cloud + Google login (eng katta o'zgarish)
-- Lovable Cloud yoqiladi (Supabase asosida, foydalanuvchi ko'zi bilan "Cloud" deb ataladi).
-- **Google orqali kirish**: bitta tugma bilan. Kirgan foydalanuvchi qurilma almashtirsa ham, kelgan joyidan davom etadi.
-- `profiles` jadvali (ism, jins, yosh, tanlangan daraja, ball, streak, sozlamalar).
-- `mistakes` jadvali (predlog/qoida bo'yicha xatolar, sana, qaysi savol).
-- `learned_words` jadvali (o'rganilgan flashcards).
-- `daily_progress` jadvali (streak va oxirgi tashrif).
-- RLS: har kim faqat o'z ma'lumotini ko'radi. `has_role` pattern kelgusi admin uchun.
-- Migratsiya: mavjud `localStorage` profil birinchi kirishda cloudga ko'chiriladi (bir marta).
-- Chiqmaguncha eslab qoladi (Supabase session).
+# Reja — Linny v3
 
-## 2. Yangi mashq rejimlari (Learning Session menyusida yangi kartalar)
-- **Spelling / Typing**: AI so'z aytadi (yoki tarjima ko'rsatadi), foydalanuvchi klaviaturada yozadi. Harfma-harf tekshirish (yashil/qizil).
-- **Translate**: ikki yo'nalish — UZ→EN va EN→UZ. AI baholaydi (semantik moslik, aniq javob emas).
-- **Shadowing (Speaking)**: AI gap yozadi + TTS (browser SpeechSynthesis) o'qiydi → foydalanuvchi mikrofon (Web Speech Recognition) orqali takrorlaydi → so'zma-so'z solishtirish (yashil/qizil).
-- **Daily Mini-Challenge**: AI kunlik topshiriq (masalan "3 gap tuz, `because` va `with` ishlat"). Foydalanuvchi yozadi, AI baholaydi va tuzatadi.
-- **Code/Text Explainer**: IT rejimi — matn/error/kod paste qiladi, AI tarjima + `is/are/the/by/of` kabi so'zlarning vazifasini gap ichida bittalab tushuntiradi.
+Katta ish. 3 asosiy blok: (A) Bug/oqim tuzatishlar, (B) Vocabulary yodlash tizimi, (C) Boshqa Ko'nikmalar bo'limlarini qayta qurish.
 
-## 3. Qiyinchilik darajasi (har rejim uchun)
-- **Oson**: har savolda "💡 Tip" tugmasi (AI kichik ishora beradi).
-- **O'rta**: standart.
-- **Qiyin**: xato uchun 1-2 imkoniyat, keyin savol o'tib ketadi.
-- Dashboard va rejim ichida tanlanadi, profilga saqlanadi.
+---
 
-## 4. Yaxshilangan tushuntirishlar ("Nega?" va "Ko'proq")
-- Har savol/karta ostida ikki tugma:
-  - **Nega?** — 2-3 gap, aniq va tushunarli o'zbekcha.
-  - **Ko'proq ma'lumot** — AI to'liq, yosh bolaga tushuntirgandek: qoida + 3-4 real hayot misoli + qachon ishlatiladi/ishlatilmaydi.
-- Xato bo'lganda avtomatik **Visual Micro-Explainer** chiqadi: `of — mansublik` kabi 1 jumlali shpargalka + emoji.
+## A. Bug fixes va oqim (birinchi navbatda)
 
-## 5. Xatolar sandig'i — aqlliroq
-- Predlog/qoida bo'yicha teglash (`of`, `in`, `at`, `is`, `a/an/the`, `Past Simple`, ...).
-- **Har 3 kunda** yoki dars boshida dashboard bannerida: "Sizda `of` bo'yicha 4 ta xato bor — takrorlaymizmi?" tugmasi.
-- Cloud jadvalidan o'qiladi, qurilmalar orasida sinxron.
+1. **Sahifa yangilanganda bosh sahifaga qaytish**
+   - Sabab: `src/routes/index.tsx` app "screen" ni faqat React state da saqlaydi (`useState`). Refresh → state yo'qoladi.
+   - Yechim: har bir ekran uchun alohida route yaratamiz:
+     - `/auth` (bor)
+     - `/onboarding`
+     - `/level`
+     - `/placement`
+     - `/dashboard`
+     - `/learn/$mode` (ai-quiz, rules, flashcards, skills, spelling, translate, shadowing, code, daily, vocab)
+     - `/mistakes`
+   - Har biri `_authenticated` layout ostida bo'ladi (auth-first).
+   - Navigatsiya `useNavigate` orqali.
 
-## 6. Contextual (Smart) Flashcards
-- Har karta: so'z + tarjima + **gap ichida namuna** + **nima uchun bu grammatika**.
-- Masalan: `user` → "List of users" → "of tegishlilikni bildiryapti".
+2. **Auth-first**: Saytga birinchi kirishda `/auth` chiqadi. `_authenticated/route.tsx` allaqachon bor — index `_authenticated/index.tsx` ga ko'chiriladi, top-level `index.tsx` faqat `/auth` ga redirect qiladi (yoki sign-in landing).
 
-## 7. Streak — cloud asosida
-- Kun bo'yicha `daily_progress` yozuvi. Kun o'tkazib yuborsa 0 dan boshlanadi.
-- Dashboardda alanga 🔥 + eng uzun streak.
+3. **Daily Challenge yuklanmoqda muammosi**
+   - Debug qilib, `genDailyChallenge` server fn xatosini UI ga chiqaramiz (hozir silently loading qolyapti).
+   - Retry tugmasi va aniq xato matni.
 
-## Texnik detallar
+4. **SignOut**: Hozir bor, route-based tuzilmada global joylashtiramiz.
 
-### Cloud sozlash
-- `supabase--enable` bilan Lovable Cloud yoqiladi.
-- `supabase--configure_social_auth` bilan Google provideri yoqiladi.
-- Google login `lovable.auth.signInWithOAuth("google", ...)` orqali (broker).
-- `src/routes/_authenticated/*` gate `_authenticated/route.tsx` (integratsiya boshqaradi).
-- `src/routes/auth.tsx` — public sign-in sahifa (Google tugma).
-- `src/routes/index.tsx` — public landing; agar sessiya bo'lsa `/app` ga redirect.
+---
 
-### Yangi routelar
-- `/auth` — public login (Google).
-- `/_authenticated/app` — hozirgi dashboard/onboarding oqimi ko'chib keladi.
+## B. Vocabulary yodlash tizimi (asosiy yangi feature)
 
-### Server functions (`src/lib/*.functions.ts`)
-- `getMyProfile`, `saveMyProfile` (`requireSupabaseAuth`).
-- `logMistake`, `listMistakes`, `mistakesByTag`.
-- `bumpDailyStreak`.
-- `gradeTranslation` (AI: foydalanuvchi tarjimasini baholaydi).
-- `gradeMiniChallenge` (AI: kunlik topshiriq matnini baholaydi).
-- `explainDeep` (AI: to'liq "ko'proq ma'lumot" tushuntirish).
-- `microExplain` (AI: xatoda 1 jumlali shpargalka).
-- `explainCodeText` (Code/Text Explainer).
-- Mavjud `genQuestions`/`genFlashcards`/`genRuleExplanation` da `difficulty` va "smart flashcard" maydonlari qo'shiladi.
+### Data model (migration)
+```sql
+-- Kunlik yodlash so'zlari
+CREATE TABLE public.vocab_words (
+  id uuid PK,
+  user_id uuid,
+  word text,
+  translation text,
+  pronunciation text,
+  topic text,
+  assigned_date date,   -- qaysi kun uchun rejalashtirilgan
+  status text,          -- 'pending' | 'shown' | 'learned' | 'mastered'
+  learned_at timestamptz,
+  is_favorite boolean default false,
+  favorited_at timestamptz,
+  created_at timestamptz
+);
 
-### UI komponentlar
-- `src/components/methods/Spelling.tsx`
-- `src/components/methods/Translate.tsx`
-- `src/components/methods/Shadowing.tsx` (SpeechSynthesis + SpeechRecognition)
-- `src/components/methods/DailyChallenge.tsx`
-- `src/components/methods/CodeExplainer.tsx`
-- `src/components/DifficultyPicker.tsx`
-- `src/components/MicroExplainer.tsx` (xato bo'lganda popup)
-- `src/components/DeepExplainSheet.tsx` ("Ko'proq" tugmasi)
-- `LearningSession.tsx` menyusiga 5 yangi karta qo'shiladi.
-- `Dashboard.tsx` da streak bannerida `mistakesByTag` taklifi.
+-- Foydalanuvchi sozlamalari
+ALTER TABLE profiles ADD COLUMN daily_word_count int default 10;
+ALTER TABLE profiles ADD COLUMN vocab_last_generated date;
+```
++ tegishli GRANT va RLS policylar.
 
-### Migratsiya
-- `src/lib/profile.ts` cloud-first bo'ladi: signed-in bo'lsa server fn'lardan o'qiydi; localStorage faqat public landingda ishlatiladi.
-- Birinchi kirishda `localStorage`dagi ma'lumot cloudga bir marta ko'chiriladi.
+### Oqim
+1. **Birinchi kirish**: `/vocab/setup` — foydalanuvchi kuniga nechta so'z (5–30) tanlaydi.
+2. **Vocab home** (`/learn/vocab`):
+   - "Yodlashni boshlash" tugmasi (agar bugun hali ko'rmagan bo'lsa) → "Yodlashni davom ettirish" (ko'rgan lekin test topshirmagan) → "Yodladim" (yopishdan keyin).
+   - "Sevimlilar" tugmasi.
+   - "Kunlik meyorni o'zgartirish" tugmasi.
+   - Progress: bugungi X/Y so'z, streak.
+3. **Yodlash oynasi**: AI kartochkalar birma-bir/list ko'rinishda (so'z, tarjima, talaffuz kichik matnda, "🔊 Eshitish" tugmasi — Web Speech `speechSynthesis` faqat inglizcha o'qiydi).
+   - Pastda tugmalar: **Ulashish** (Web Share API, matn), **Yuklab olish** (.txt), **Sevimli** (star toggle per word), **Yopish**.
+4. **Sevimlilar sahifasi**: ro'yxat + mavzu + sana + "olib tashlash".
+5. **Yodladim testi**:
+   - Test boshlashdan oldin: slider "eski so'zlardan qo'shimcha % (10–70)".
+   - Bugungi so'zlar 100% + eski `learned` so'zlardan X% ni tasodifiy qo'shadi.
+   - MCQ + yozish aralash, tartib random, takrorlanmaydi.
+   - Natija ≥70% → `status='learned'`, bugungi kun bajarildi, streak yangilanadi.
+   - <70% → qayta yechish so'raladi.
+6. **Kunlik yangilash**: `assigned_date < today` va `status != 'learned'` — ertangi kunga o'tkaziladi (yig'iladi). Har kun soat 00:00 (mahalliy) — server fn ochilganda tekshiradi va yangi kun uchun AI orqali yangi so'zlar yaratadi.
 
-## Bajarish tartibi
-1. `supabase--enable` + jadvallar/RLS/grants migratsiyasi.
-2. Google auth (`configure_social_auth`) + `/auth` sahifa + `_authenticated` gate.
-3. Profil/streak/mistake server functionlari va `profile.ts` refactor.
-4. Difficulty picker + AI prompts yangilanishi.
-5. "Nega?" + "Ko'proq" + Micro-Explainer komponentlari va AIQuiz/Flashcards da ishlatish.
-6. Yangi rejimlar: Spelling, Translate, Shadowing, DailyChallenge, CodeExplainer.
-7. Smart Flashcards maydonlari.
-8. Dashboard: streak banner + xatolar bo'yicha takrorlash taklifi.
+### AI
+- `genVocabBatch` server fn: user darajasi + kelib chiqmagan mavzular + `learnedWords` ro'yxatidan tashqari yangi so'zlar.
+- `genVocabTest` server fn: bugungi + eski so'zlardan aralash test tuzadi.
 
-Bu katta ish. Tasdiqlasangiz, ketma-ket bajarishni boshlayman — Cloud va Google login birinchi bo'ladi, keyin qolgan modullar.
+---
+
+## C. Boshqa Ko'nikmalar bo'limlarini shu tarhda mustahkamlash
+
+1. **Grammar (Qoidalar)** — mavjud `RulesMode` ni kengaytirish: real tushunarli misollar, hayotiy gaplar, "Sinab ko'r" mini-testi.
+2. **Reading (Savollar orqali)** — foydalanuvchi mavzu kiritadi, AI parcha + savollar tuzadi.
+3. **Topics (Mavzular)** — user istalgan mavzu; AI hech qachon "yo'q" demasin (prompt strong).
+4. **Flashcards** — mavjud, xatolik bo'lsa saqlash.
+5. **Writing (Yozish)** — AI faqat foydalanuvchining `learned_words` ro'yxatidan o'zbekcha beradi; user inglizcha yozadi. Case-insensitive.
+6. **Translate** — gap-darajasida (mavjud lekin so'z aralash rejim qo'shamiz).
+7. **Speaking (Talaffuz)** — kirishda tanlash: **So'zlar / Gaplar** × **eng→uz / uz→en / aralash**. 10–100 element. Har birini SpeechSynthesis (faqat en) o'qiydi. Mikrofon → `SpeechRecognition` → matn taqqoslash (%). <70% → qayta o'qish. Bayroqcha = tugatish. Yakuniy ball 0–100.
+8. **Code & Text explainer** — mavjud; qo'shimcha: so'zlarni "Sevimlilarga qo'shish" tugmasi, kod tilini avto-aniqlash yorlig'i.
+
+---
+
+## Kirish nuqtasi tartibi
+
+`/` → agar auth yo'q → `/auth`; auth bor → `/dashboard` (yoki agar profil to'lmagan bo'lsa `/onboarding` → `/level` → `/placement` → `/dashboard`). Har bir ekran real route, refresh xavfsiz.
+
+---
+
+## Amalga oshirish tartibi (bo'lib-bo'lib)
+
+Bir zumda hammasi juda katta. Men quyidagi tartibda ishlayman:
+
+**1-bosqich (bu turn):** A blok to'liq — route arxitekturasi (refresh fix), auth-first, Daily Challenge debug, vocab schema migration + Vocab MVP (setup, home, yodlash oynasi, sevimlilar, test, oddiy AI batch).
+
+**2-bosqich (keyingi turn):** B blokni sayqallash + C blok bo'limlarini birma-bir qayta qurish (Writing, Speaking mikrofon oqimi, Reading, Topics kuchli prompt).
+
+Katta hajm sabab bo'lib-bo'lib qilaman. Rozimisiz shu tartib bilan boshlashimga?

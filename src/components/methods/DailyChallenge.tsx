@@ -12,15 +12,27 @@ export default function DailyChallenge({ profile, onBack }: Props) {
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [idx, setIdx] = useState(0);
   const [done, setDone] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const started = useRef(false);
+
+  async function load() {
+    setLoading(true);
+    setErr(null);
+    try {
+      const t = await gen({ data: { age: profile.age ?? 20, level: profile.levelChosen ?? "past" } });
+      setTasks(t);
+    } catch (e) {
+      setErr((e as Error).message || "Yuklashda xatolik");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    (async () => {
-      const t = await gen({ data: { age: profile.age ?? 20, level: profile.levelChosen ?? "past" } });
-      setTasks(t);
-    })();
+    load();
   }, []); // eslint-disable-line
 
   function finish() {
@@ -28,8 +40,24 @@ export default function DailyChallenge({ profile, onBack }: Props) {
     setDone(true);
   }
 
-  if (tasks.length === 0) {
+  if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="card-surface p-8">⚡ Yuklanmoqda...</div></div>;
+  }
+
+  if (err || tasks.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="card-surface p-6 max-w-md text-center">
+          <div className="text-3xl">😕</div>
+          <div className="mt-2 font-semibold">Vazifalarni yuklab bo'lmadi</div>
+          {err && <div className="mt-1 text-xs text-muted-foreground break-words">{err}</div>}
+          <div className="mt-4 flex gap-2 justify-center">
+            <button onClick={load} className="btn-primary">Qayta urinish</button>
+            <button onClick={onBack} className="btn-ghost">Orqaga</button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (done) {

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type { LevelName, Profile } from "@/lib/types";
 import { bumpStreak, loadProfile, updateProfile } from "@/lib/profile";
@@ -13,6 +13,7 @@ import MistakesReview from "@/components/MistakesReview";
 import TestCountSelect from "@/components/TestCountSelect";
 import DailyChallenge from "@/components/methods/DailyChallenge";
 import { useCloudProfileSync } from "@/hooks/useCloudSync";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,24 +33,79 @@ type View =
   | "onboardProfile" | "levelSelect" | "count" | "test" | "results"
   | "dashboard" | "learn" | "mistakes" | "daily";
 
+const VIEW_KEY = "linny_view_v1";
+const RESULT_KEY = "linny_last_result_v1";
+const COUNT_KEY = "linny_test_count_v1";
+
+function saveView(v: View) {
+  try { localStorage.setItem(VIEW_KEY, v); } catch { /* ignore */ }
+}
+function loadView(): View | null {
+  try { return (localStorage.getItem(VIEW_KEY) as View) || null; } catch { return null; }
+}
+
 function HomePage() {
+  const navigate = useNavigate();
+  const [checkedAuth, setCheckedAuth] = useState(false);
   const [profile, setProfile] = useState<Profile>({});
-  const [view, setView] = useState<View>("onboardProfile");
-  const [testCount, setTestCount] = useState<number>(20);
-  const [lastResult, setLastResult] = useState<{ score: number; correct: number; total: number; stars: number } | null>(null);
+  const [view, setViewState] = useState<View>("onboardProfile");
+  const [testCount, setTestCount] = useState<number>(() => {
+    if (typeof window === "undefined") return 20;
+    return Number(localStorage.getItem(COUNT_KEY)) || 20;
+  });
+  const [lastResult, setLastResult] = useState<{ score: number; correct: number; total: number; stars: number } | null>(() => {
+    if (typeof window === "undefined") return null;
+    try { const r = localStorage.getItem(RESULT_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
+  });
+
+  function setView(v: View) {
+    saveView(v);
+    setViewState(v);
+  }
 
   useCloudProfileSync(setProfile);
 
+  // Auth-first gate
   useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        navigate({ to: "/auth" });
+        return;
+      }
+      setCheckedAuth(true);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      if (!s) navigate({ to: "/auth" });
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!checkedAuth) return;
     const p = bumpStreak() ?? loadProfile();
     setProfile(p);
     applyDesignFor(p.gender, p.age);
     if (p.theme === "dark") document.documentElement.classList.add("dark");
-    if (!p.onboardedProfile || !p.gender || !p.age || !p.name) setView("onboardProfile");
-    else if (!p.levelChosen) setView("levelSelect");
-    else if (typeof p.placementScore !== "number") setView("levelSelect");
-    else setView("dashboard");
-  }, []);
+
+    // Restore saved view if valid for this profile state
+    const saved = loadView();
+    const canRestore =
+      saved &&
+      p.onboardedProfile && p.gender && p.age && p.name &&
+      p.levelChosen &&
+      typeof p.placementScore === "number" &&
+      ["dashboard", "learn", "mistakes", "daily"].includes(saved);
+
+    if (canRestore) {
+      setViewState(saved);
+    } else if (!p.onboardedProfile || !p.gender || !p.age || !p.name) {
+      setView("onboardProfile");
+    } else if (!p.levelChosen || typeof p.placementScore !== "number") {
+      setView("levelSelect");
+    } else {
+      setView("dashboard");
+    }
+  }, [checkedAuth]);
 
   function handleProfile(data: { name: string; gender: "male" | "female"; age: number }) {
     const p = updateProfile({ ...data, onboardedProfile: true });
@@ -66,6 +122,7 @@ function HomePage() {
 
   function handleFinishTest(result: { score: number; correct: number; total: number; stars: number }) {
     setLastResult(result);
+    try { localStorage.setItem(RESULT_KEY, JSON.stringify(result)); } catch { /* ignore */ }
     const p = updateProfile({
       placementScore: result.score,
       placementStars: result.stars,
@@ -75,12 +132,27 @@ function HomePage() {
     setView("results");
   }
 
+  if (!checkedAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Yuklanmoqda...</div>
+      </div>
+    );
+  }
+
   return (
     <>
       {view === "onboardProfile" && <OnboardingProfile onComplete={handleProfile} />}
       {view === "levelSelect" && <LevelSelect onStart={handleLevel} />}
       {view === "count" && (
-        <TestCountSelect onStart={(n) => { setTestCount(n); setView("test"); }} onBack={() => setView("levelSelect")} />
+        <TestCountSelect
+          onStart={(n) => {
+            setTestCount(n);
+            try { localStorage.setItem(COUNT_KEY, String(n)); } catch { /* ignore */ }
+            setView("test");
+          }}
+          onBack={() => setView("levelSelect")}
+        />
       )}
       {view === "test" && profile.levelChosen && (
         <PlacementTest startLevel={profile.levelChosen} totalQuestions={testCount} age={profile.age}

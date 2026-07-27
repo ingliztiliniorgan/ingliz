@@ -68,6 +68,7 @@ export default function LearningSession({ profile, onExit }: Props) {
   }
 
   const back = () => setActive(null);
+  if (active === "vocab") return <Vocabulary profile={profile} onBack={back} />;
   if (active === "quiz")
     return <AIQuiz profile={profile} askTopic={false} defaultTopic="umumiy ingliz tili" skill="general" title="Savollar orqali" intro="" onBack={back} />;
   if (active === "rules") return <RulesMode profile={profile} onBack={back} />;

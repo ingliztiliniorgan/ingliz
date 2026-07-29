@@ -4,7 +4,7 @@ import { z } from "zod";
 import { generateText, Output } from "ai";
 import { getGateway } from "./ai-gateway.server";
 
-const MODEL = "google/gemini-3.6-flash";
+const MODEL = "gemini-2.5-flash";
 
 const WordSchema = z.object({
   word: z.string(),

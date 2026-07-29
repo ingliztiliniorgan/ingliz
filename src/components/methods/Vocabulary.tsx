@@ -11,6 +11,9 @@ import {
   type VocabRow,
 } from "@/lib/vocab.functions";
 import type { Profile } from "@/lib/types";
+import { useAuthUser } from "@/hooks/useCloudSync";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 
 interface Props {
   profile: Profile;
@@ -28,6 +31,7 @@ export default function Vocabulary({ onBack }: Props) {
   const finalize = useServerFn(finalizeVocabTest);
   const favs = useServerFn(listFavorites);
 
+  const user = useAuthUser();
   const [stage, setStage] = useState<Stage>("home");
   const [words, setWords] = useState<VocabRow[]>([]);
   const [dailyCount, setDailyCountLocal] = useState<number>(10);
@@ -53,9 +57,15 @@ export default function Vocabulary({ onBack }: Props) {
 
   useEffect(() => {
     if (started.current) return;
-    started.current = true;
-    reload();
-  }, []); // eslint-disable-line
+    if (user === null) {
+      setLoading(false);
+      return;
+    }
+    if (user) {
+      started.current = true;
+      reload();
+    }
+  }, [user]); // eslint-disable-line
 
   const anyShown = words.some((w) => w.status !== "pending");
   const allWordsIds = words.map((w) => w.id);
@@ -77,6 +87,29 @@ export default function Vocabulary({ onBack }: Props) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="card-surface p-6">📚 Bugungi so'zlar tayyorlanmoqda...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="card-surface p-8 max-w-md w-full text-center">
+          <div className="text-5xl">📚</div>
+          <h2 className="mt-3 text-2xl font-bold">Lug'at uchun kirish kerak</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Kunlik so'zlaringiz bulutda saqlanadi va qurilmangizdan qat'iy progress yo'qolmaydi. Davom etish uchun Google orqali kiring.
+          </p>
+          <button
+            onClick={async () => {
+              await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+            }}
+            className="btn-primary mt-6 w-full"
+          >
+            Google bilan kirish
+          </button>
+          <button onClick={onBack} className="btn-ghost mt-3 text-sm">← Orqaga</button>
+        </div>
       </div>
     );
   }

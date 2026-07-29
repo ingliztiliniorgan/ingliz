@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type { LevelName, Profile } from "@/lib/types";
 import { bumpStreak, loadProfile, updateProfile } from "@/lib/profile";
@@ -13,7 +13,6 @@ import MistakesReview from "@/components/MistakesReview";
 import TestCountSelect from "@/components/TestCountSelect";
 import DailyChallenge from "@/components/methods/DailyChallenge";
 import { useCloudProfileSync } from "@/hooks/useCloudSync";
-import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -45,8 +44,6 @@ function loadView(): View | null {
 }
 
 function HomePage() {
-  const navigate = useNavigate();
-  const [checkedAuth, setCheckedAuth] = useState(false);
   const [profile, setProfile] = useState<Profile>({});
   const [view, setViewState] = useState<View>("onboardProfile");
   const [testCount, setTestCount] = useState<number>(() => {
@@ -65,29 +62,12 @@ function HomePage() {
 
   useCloudProfileSync(setProfile);
 
-  // Auth-first gate
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        navigate({ to: "/auth" });
-        return;
-      }
-      setCheckedAuth(true);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      if (!s) navigate({ to: "/auth" });
-    });
-    return () => sub.subscription.unsubscribe();
-  }, [navigate]);
-
-  useEffect(() => {
-    if (!checkedAuth) return;
     const p = bumpStreak() ?? loadProfile();
     setProfile(p);
     applyDesignFor(p.gender, p.age);
     if (p.theme === "dark") document.documentElement.classList.add("dark");
 
-    // Restore saved view if valid for this profile state
     const saved = loadView();
     const canRestore =
       saved &&
@@ -105,7 +85,7 @@ function HomePage() {
     } else {
       setView("dashboard");
     }
-  }, [checkedAuth]);
+  }, []);
 
   function handleProfile(data: { name: string; gender: "male" | "female"; age: number }) {
     const p = updateProfile({ ...data, onboardedProfile: true });
@@ -130,14 +110,6 @@ function HomePage() {
     });
     setProfile(p);
     setView("results");
-  }
-
-  if (!checkedAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Yuklanmoqda...</div>
-      </div>
-    );
   }
 
   return (

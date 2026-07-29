@@ -65,7 +65,7 @@ export default function AIQuiz({ profile, defaultTopic, askTopic = true, skill =
       setStage("quiz");
     } catch (e) {
       console.error(e);
-      setError("Savollarni yuklab bo'lmadi. Yana urinib ko'ring.");
+      setError((e as Error)?.message || "Savollarni yuklab bo'lmadi.");
       setStage("input");
     }
   }

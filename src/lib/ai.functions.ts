@@ -51,6 +51,7 @@ function difficultyDescriptor(d: string) {
 }
 
 export const genQuestions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -99,6 +100,7 @@ Faqat JSON qaytar: {"items":[...]}`;
   });
 
 export const genFlashcards = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -130,6 +132,7 @@ Faqat JSON: {"items":[...]}`;
   });
 
 export const genRuleExplanation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ age: z.number().int(), rule: z.string().min(1) }).parse(d))
   .handler(async ({ data }) => {
     const gw = getGateway();
@@ -147,6 +150,7 @@ JSON: {"title": "...", "intro": "o'zbekcha 2-3 gap qoida", "examples": [{"en":".
 
 // Deep explanation on-demand — "Ko'proq ma'lumot"
 export const deepExplain = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -187,6 +191,7 @@ Faqat JSON: {"summary":"...", "why":"...", "examples":[{"en":"...","uz":"..."}],
 
 // Translation grading (UZ↔EN)
 export const gradeTranslation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -222,6 +227,7 @@ JSON: {"score":0-100 son, "ideal":"eng yaxshi tarjima", "feedback":"o'zbekcha qi
 
 // Translate sentence bank
 export const genTranslateSet = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -251,6 +257,7 @@ JSON: {"items":[{"source":"...","ideal":"..."}]}`;
 
 // Spelling words
 export const genSpellingWords = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -282,6 +289,7 @@ JSON: {"items":[{"word":"...","translation":"...","hint":"b_____ (7)","pronuncia
 
 // IT Code/Text explainer
 export const explainCodeText = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({ input: z.string().min(3), age: z.number().int() }).parse(d),
   )
@@ -324,6 +332,7 @@ const DailyTaskSchema = z.object({
 export type DailyTask = z.infer<typeof DailyTaskSchema>;
 
 export const genDailyChallenge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({ age: z.number().int(), level: z.enum(["past", "orta", "yaxshi"]) }).parse(d),
   )

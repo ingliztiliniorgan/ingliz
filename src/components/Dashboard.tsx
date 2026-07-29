@@ -74,6 +74,15 @@ export default function Dashboard({ profile, onStartLearning, onOpenMistakes, on
         </div>
       </header>
 
+      <div className="mt-4 p-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 text-sm">
+        <div className="font-semibold">⚠️ AI funksiyalari haqida</div>
+        <p className="mt-1 text-muted-foreground">
+          Agar "AI kreditlari tugagan" degan xato chiqsa — bu Lovable workspace-ingizdagi AI kreditlari tugaganini bildiradi. Placement test, xatolar sandig'i, streak va profil AI'siz ishlaydi.
+        </p>
+      </div>
+
+
+
       <section className="mt-6 grid md:grid-cols-3 gap-4">
         <div className="card-surface p-5">
           <div className="text-xs text-muted-foreground uppercase">Darajangiz</div>

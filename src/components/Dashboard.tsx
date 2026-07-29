@@ -74,10 +74,10 @@ export default function Dashboard({ profile, onStartLearning, onOpenMistakes, on
         </div>
       </header>
 
-      <div className="mt-4 p-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 text-sm">
-        <div className="font-semibold">⚠️ AI funksiyalari haqida</div>
+      <div className="mt-4 p-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 text-sm">
+        <div className="font-semibold">✨ AI: Google Gemini</div>
         <p className="mt-1 text-muted-foreground">
-          Agar "AI kreditlari tugagan" degan xato chiqsa — bu Lovable workspace-ingizdagi AI kreditlari tugaganini bildiradi. Placement test, xatolar sandig'i, streak va profil AI'siz ishlaydi.
+          Sayt endi to'g'ridan-to'g'ri Google Gemini API orqali ishlaydi — limitlar keng. Agar limit xatosi chiqsa, biroz kuting va qayta urinib ko'ring.
         </p>
       </div>
 

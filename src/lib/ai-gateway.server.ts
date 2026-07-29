@@ -1,8 +1,6 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
-// Wraps fetch to translate Lovable AI Gateway errors into clear Uzbek messages
-// so users see the real reason (e.g. "credits exhausted") instead of a generic
-// "something went wrong" string.
+// Translate Gemini API errors into clear Uzbek messages.
 const friendlyFetch: typeof fetch = async (input, init) => {
   const res = await fetch(input, init);
   if (res.ok) return res;
@@ -10,35 +8,35 @@ const friendlyFetch: typeof fetch = async (input, init) => {
   let message = "";
   try {
     const j = JSON.parse(text);
-    message = j?.message || j?.error?.message || j?.title || "";
+    message = j?.error?.message || j?.message || "";
   } catch {
     message = text.slice(0, 200);
   }
-  if (res.status === 402) {
-    throw new Error(
-      "AI kreditlari tugagan. Workspace kreditlarini to'ldirmaguningizcha AI funksiyalari ishlamaydi. (Lovable → Cloud → Credits)",
-    );
-  }
   if (res.status === 429) {
-    throw new Error("AI so'rovlari juda ko'p — biroz kuting va qayta urinib ko'ring.");
+    throw new Error("Gemini so'rovlari limitidan oshdi — biroz kuting va qayta urinib ko'ring.");
   }
   if (res.status === 401 || res.status === 403) {
-    throw new Error("AI xizmatiga ruxsat yo'q. LOVABLE_API_KEY ni tekshiring.");
+    throw new Error("Gemini API kalitiga ruxsat yo'q yoki noto'g'ri. GEMINI_API_KEY ni tekshiring.");
+  }
+  if (res.status === 402) {
+    throw new Error("Gemini hisobida to'lov muammosi bor.");
   }
   throw new Error(`AI xatosi (${res.status}): ${message || "noma'lum"}`);
 };
 
-export function createLovableAiGatewayProvider(apiKey: string) {
+// Gemini exposes an OpenAI-compatible endpoint at
+// https://generativelanguage.googleapis.com/v1beta/openai/
+export function createGeminiProvider(apiKey: string) {
   return createOpenAICompatible({
-    name: "lovable",
-    baseURL: "https://ai.gateway.lovable.dev/v1",
-    headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
+    name: "gemini",
+    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+    headers: { Authorization: `Bearer ${apiKey}` },
     fetch: friendlyFetch,
   });
 }
 
 export function getGateway() {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("Missing LOVABLE_API_KEY");
-  return createLovableAiGatewayProvider(key);
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new Error("Missing GEMINI_API_KEY");
+  return createGeminiProvider(key);
 }

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type { LevelName, Profile } from "@/lib/types";
-import { bumpStreak, loadProfile, updateProfile } from "@/lib/profile";
+import { loadProfile } from "@/lib/profile";
 import { applyDesignFor } from "@/lib/theme";
 import LevelSelect from "@/components/LevelSelect";
 import PlacementTest from "@/components/PlacementTest";
@@ -12,7 +12,7 @@ import LearningSession from "@/components/LearningSession";
 import MistakesReview from "@/components/MistakesReview";
 import TestCountSelect from "@/components/TestCountSelect";
 import DailyChallenge from "@/components/methods/DailyChallenge";
-import { useCloudProfileSync } from "@/hooks/useCloudSync";
+import { useSessionProfile } from "@/hooks/useCloudSync";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,20 +32,19 @@ type View =
   | "onboardProfile" | "levelSelect" | "count" | "test" | "results"
   | "dashboard" | "learn" | "mistakes" | "daily";
 
-const VIEW_KEY = "linny_view_v1";
+const RESTORABLE: View[] = ["dashboard", "learn", "mistakes", "daily", "levelSelect", "count"];
 const RESULT_KEY = "linny_last_result_v1";
 const COUNT_KEY = "linny_test_count_v1";
 
-function saveView(v: View) {
-  try { localStorage.setItem(VIEW_KEY, v); } catch { /* ignore */ }
-}
-function loadView(): View | null {
-  try { return (localStorage.getItem(VIEW_KEY) as View) || null; } catch { return null; }
+function defaultViewFor(p: Profile): View {
+  if (!p.onboardedProfile || !p.gender || !p.age || !p.name) return "onboardProfile";
+  if (!p.levelChosen || typeof p.placementScore !== "number") return "levelSelect";
+  return "dashboard";
 }
 
 function HomePage() {
-  const [profile, setProfile] = useState<Profile>({});
-  const [view, setViewState] = useState<View>("onboardProfile");
+  const { user, ready, profile, setProfile, persist } = useSessionProfile();
+  const [view, setViewState] = useState<View | null>(null);
   const [testCount, setTestCount] = useState<number>(() => {
     if (typeof window === "undefined") return 20;
     return Number(localStorage.getItem(COUNT_KEY)) || 20;
@@ -55,66 +54,65 @@ function HomePage() {
     try { const r = localStorage.getItem(RESULT_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
   });
 
+  // Persist the current screen (cloud for signed-in users) so a refresh — or a
+  // sign-in on another device — lands exactly where the user left off.
   function setView(v: View) {
-    saveView(v);
     setViewState(v);
+    if (user) persist({ lastView: v });
   }
 
-  useCloudProfileSync(setProfile);
-
+  // Decide the initial screen only once the profile is known.
   useEffect(() => {
-    const p = bumpStreak() ?? loadProfile();
-    setProfile(p);
-    applyDesignFor(p.gender, p.age);
-    if (p.theme === "dark") document.documentElement.classList.add("dark");
+    if (!ready) return;
+    applyDesignFor(profile.gender, profile.age);
+    if (profile.theme === "dark") document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
 
-    const saved = loadView();
+    const fallback = defaultViewFor(profile);
+    const saved = profile.lastView as View | undefined;
     const canRestore =
-      saved &&
-      p.onboardedProfile && p.gender && p.age && p.name &&
-      p.levelChosen &&
-      typeof p.placementScore === "number" &&
-      ["dashboard", "learn", "mistakes", "daily"].includes(saved);
-
-    if (canRestore) {
-      setViewState(saved);
-    } else if (!p.onboardedProfile || !p.gender || !p.age || !p.name) {
-      setView("onboardProfile");
-    } else if (!p.levelChosen || typeof p.placementScore !== "number") {
-      setView("levelSelect");
-    } else {
-      setView("dashboard");
-    }
-  }, []);
+      !!user && !!saved && RESTORABLE.includes(saved) && fallback === "dashboard";
+    setViewState(canRestore ? saved! : fallback);
+  }, [ready, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleProfile(data: { name: string; gender: "male" | "female"; age: number }) {
-    const p = updateProfile({ ...data, onboardedProfile: true });
-    setProfile(p);
+    const p = persist({ ...data, onboardedProfile: true });
     applyDesignFor(p.gender, p.age);
     setView("levelSelect");
   }
 
   function handleLevel(level: LevelName) {
-    const p = updateProfile({ levelChosen: level });
-    setProfile(p);
+    persist({ levelChosen: level });
     setView("count");
   }
 
   function handleFinishTest(result: { score: number; correct: number; total: number; stars: number }) {
     setLastResult(result);
     try { localStorage.setItem(RESULT_KEY, JSON.stringify(result)); } catch { /* ignore */ }
-    const p = updateProfile({
+    persist({
       placementScore: result.score,
       placementStars: result.stars,
       placementCount: result.total,
     });
-    setProfile(p);
     setView("results");
+  }
+
+  if (!ready || view === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto rounded-full gradient-brand flex items-center justify-center text-3xl animate-pulse">🦉</div>
+          <p className="mt-4 text-sm text-muted-foreground">Yuklanmoqda...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <>
-      {view === "onboardProfile" && <OnboardingProfile onComplete={handleProfile} />}
+      {view === "onboardProfile" && (
+        <OnboardingProfile initialName={profile.name} onComplete={handleProfile} />
+      )}
       {view === "levelSelect" && <LevelSelect onStart={handleLevel} />}
       {view === "count" && (
         <TestCountSelect

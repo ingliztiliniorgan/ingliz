@@ -100,6 +100,7 @@ export type Database = {
           daily_word_count: number
           difficulty: string
           gender: string | null
+          last_view: string | null
           last_visit: string | null
           level_chosen: string | null
           linny_intro_seen: boolean
@@ -123,6 +124,7 @@ export type Database = {
           daily_word_count?: number
           difficulty?: string
           gender?: string | null
+          last_view?: string | null
           last_visit?: string | null
           level_chosen?: string | null
           linny_intro_seen?: boolean
@@ -146,6 +148,7 @@ export type Database = {
           daily_word_count?: number
           difficulty?: string
           gender?: string | null
+          last_view?: string | null
           last_visit?: string | null
           level_chosen?: string | null
           linny_intro_seen?: boolean

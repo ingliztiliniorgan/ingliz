@@ -20,6 +20,7 @@ export interface Profile {
   difficulty?: Difficulty;
   dailyChallengeDate?: string;
   dailyChallengeDone?: boolean;
+  lastView?: string;
 }
 
 export interface MistakeItem {

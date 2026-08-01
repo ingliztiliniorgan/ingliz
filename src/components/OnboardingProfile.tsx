@@ -2,12 +2,15 @@ import { useState } from "react";
 import type { Gender } from "@/lib/types";
 
 interface Props {
+  /** Prefilled from the Google account — when present the name step is skipped. */
+  initialName?: string;
   onComplete: (data: { name: string; gender: Gender; age: number }) => void;
 }
 
-export default function OnboardingProfile({ onComplete }: Props) {
-  const [step, setStep] = useState<0 | 1 | 2>(0);
-  const [name, setName] = useState("");
+export default function OnboardingProfile({ initialName, onComplete }: Props) {
+  const hasName = !!initialName && initialName.trim().length >= 2;
+  const [step, setStep] = useState<0 | 1 | 2>(hasName ? 1 : 0);
+  const [name, setName] = useState(initialName ?? "");
   const [gender, setGender] = useState<Gender | null>(null);
   const [age, setAge] = useState<number>(16);
 
@@ -65,7 +68,13 @@ export default function OnboardingProfile({ onComplete }: Props) {
               </button>
             </div>
             <div className="grid grid-cols-2 gap-3 mt-6">
-              <button onClick={() => setStep(0)} className="btn-ghost">← Orqaga</button>
+              <button
+                onClick={() => setStep(hasName ? 1 : 0)}
+                disabled={hasName}
+                className="btn-ghost disabled:opacity-40"
+              >
+                ← Orqaga
+              </button>
               <button
                 className="btn-primary disabled:opacity-40"
                 disabled={!gender}

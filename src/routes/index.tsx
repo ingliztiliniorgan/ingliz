@@ -140,7 +140,10 @@ function HomePage() {
           onOpenMistakes={() => setView("mistakes")}
           onRetakePlacement={() => setView("levelSelect")}
           onDailyChallenge={() => setView("daily")}
-          onProfileChange={setProfile} />
+          onProfileChange={(p) => {
+            setProfile(p);
+            if (user) persist({ difficulty: p.difficulty, theme: p.theme, linnyIntroSeen: p.linnyIntroSeen });
+          }} />
       )}
       {view === "learn" && <LearningSession profile={profile} onExit={() => setView("dashboard")} />}
       {view === "mistakes" && <MistakesReview profile={profile} onBack={() => setView("dashboard")} />}

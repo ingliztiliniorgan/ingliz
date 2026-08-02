@@ -186,6 +186,7 @@ Faqat JSON: {"summary":"...", "why":"...", "examples":[{"en":"...","uz":"..."}],
       model: gw(MODEL),
       output: Output.object({ schema: Schema }),
       prompt,
+      maxRetries: 0,
     });
     return output;
   });

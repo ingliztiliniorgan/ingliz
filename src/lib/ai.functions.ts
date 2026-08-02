@@ -312,6 +312,7 @@ JSON: {"summary":"1-2 gap o'zbekcha xulosa", "lineByLine":[{"en":"...","uz":"...
       model: gw(MODEL),
       output: Output.object({ schema: Schema }),
       prompt,
+      maxRetries: 0,
     });
     return output;
   });

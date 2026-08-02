@@ -23,7 +23,11 @@ export default function CodeExplainer({ profile, onBack }: Props) {
     setError(null);
     try {
       const r = await fn({ data: { input, age: profile.age ?? 20 } });
-      setResult(r);
+      if (!r.ok) {
+        setError(r.error);
+        return;
+      }
+      setResult(r.data);
     } catch (e) {
       setError(aiErrorMessage(e));
     } finally { setLoading(false); }

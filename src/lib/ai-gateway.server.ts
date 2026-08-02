@@ -1,8 +1,17 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
-// Translate Gemini API errors into clear Uzbek messages.
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Translate Gemini API errors into clear Uzbek messages, retrying rate limits.
 const friendlyFetch: typeof fetch = async (input, init) => {
-  const res = await fetch(input, init);
+  const MAX_RETRIES = 3;
+  let res = await fetch(input, init);
+
+  for (let attempt = 0; attempt < MAX_RETRIES && (res.status === 429 || res.status >= 500); attempt++) {
+    await sleep(1500 * (attempt + 1) + Math.floor(Math.random() * 500));
+    res = await fetch(input, init);
+  }
+
   if (res.ok) return res;
   const text = await res.clone().text().catch(() => "");
   let message = "";
@@ -13,7 +22,9 @@ const friendlyFetch: typeof fetch = async (input, init) => {
     message = text.slice(0, 200);
   }
   if (res.status === 429) {
-    throw new Error("Gemini so'rovlari limitidan oshdi — biroz kuting va qayta urinib ko'ring.");
+    throw new Error(
+      "Gemini so'rovlari limitidan oshdi. 1-2 daqiqa kutib, qayta urinib ko'ring (rasmlar sonini kamaytirsangiz ham yordam beradi).",
+    );
   }
   if (res.status === 401 || res.status === 403) {
     throw new Error("Gemini API kalitiga ruxsat yo'q yoki noto'g'ri. GEMINI_API_KEY ni tekshiring.");

@@ -3,6 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { genDailyChallenge, gradeTranslation, type DailyTask } from "@/lib/ai.functions";
 import type { Profile } from "@/lib/types";
 import { updateProfile } from "@/lib/profile";
+import { aiErrorMessage, isAuthError } from "@/lib/ai-error";
+import { lovable } from "@/integrations/lovable";
+
 
 interface Props { profile: Profile; onBack: () => void }
 

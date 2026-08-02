@@ -16,7 +16,16 @@ export function useAuthUser() {
   return user;
 }
 
+/** Resolve to null instead of hanging forever when the network stalls. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | null> {
+  return Promise.race([
+    p,
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
+  ]);
+}
+
 function cloudPatchOf(p: Profile) {
+
   return {
     name: p.name,
     gender: p.gender,
@@ -51,20 +60,32 @@ export function useSessionProfile() {
 
   useEffect(() => {
     let alive = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!alive) return;
-      setUser(data.session?.user ?? null);
-      setAuthReady(true);
-    });
+    // getSession() can hang (offline, blocked storage, token refresh stall).
+    // Never let that freeze the whole app on the loading screen.
+    const timer = setTimeout(() => {
+      if (alive) setAuthReady(true);
+    }, 3000);
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!alive) return;
+        setUser(data.session?.user ?? null);
+        setAuthReady(true);
+      })
+      .catch(() => {
+        if (alive) setAuthReady(true);
+      });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setUser(s?.user ?? null);
       setAuthReady(true);
     });
     return () => {
       alive = false;
+      clearTimeout(timer);
       sub.subscription.unsubscribe();
     };
   }, []);
+
 
   useEffect(() => {
     if (!authReady) return;
@@ -85,9 +106,11 @@ export function useSessionProfile() {
 
     (async () => {
       const local = loadProfile();
+      // Show the app with local data even if the cloud round-trip is slow.
+      const guard = setTimeout(() => setReady(true), 8000);
       let merged: Profile = local;
       try {
-        const cloud = await pull();
+        const cloud = await withTimeout(pull(), 7000);
         const cloudDefined = Object.fromEntries(
           Object.entries(cloud ?? {}).filter(([, v]) => v !== undefined && v !== null),
         ) as Partial<Profile>;
@@ -106,17 +129,22 @@ export function useSessionProfile() {
         }
         saveProfile(merged);
         setProfile(merged);
-        await push({ data: cloudPatchOf(merged) });
-        const { streak } = await mark();
-        merged = updateProfile({ streak });
-        setProfile(merged);
+        setReady(true);
+        await withTimeout(push({ data: cloudPatchOf(merged) }), 7000);
+        const res = await withTimeout(mark(), 7000);
+        if (res?.streak != null) {
+          merged = updateProfile({ streak: res.streak });
+          setProfile(merged);
+        }
       } catch (e) {
         console.warn("cloud sync failed", e);
         setProfile(merged);
       } finally {
+        clearTimeout(guard);
         setReady(true);
       }
     })();
+
   }, [authReady, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Update local state (+ localStorage) and push to cloud when signed in. */

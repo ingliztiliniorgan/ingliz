@@ -45,27 +45,41 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          Sahifa yuklanmadi
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Kichik xatolik yuz berdi. "Qayta urinish"ni bosing — yoki holatni tozalab boshidan
+          boshlang.
         </p>
+
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
               router.invalidate();
               reset();
+              // A plain reset often re-throws the same error; a hard reload
+              // rebuilds all client state and actually recovers.
+              setTimeout(() => window.location.reload(), 50);
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Qayta urinish
           </button>
-          <a
-            href="/"
+          <button
+            onClick={() => {
+              try {
+                localStorage.removeItem("linny_view_v1");
+                localStorage.removeItem("linny_last_result_v1");
+              } catch {
+                /* ignore */
+              }
+              window.location.replace("/");
+            }}
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
-          </a>
+            Boshidan boshlash
+          </button>
+
         </div>
       </div>
     </div>

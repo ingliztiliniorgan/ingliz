@@ -55,17 +55,29 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             onClick={() => {
               router.invalidate();
               reset();
+              // A plain reset often re-throws the same error; a hard reload
+              // rebuilds all client state and actually recovers.
+              setTimeout(() => window.location.reload(), 50);
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Qayta urinish
           </button>
-          <a
-            href="/"
+          <button
+            onClick={() => {
+              try {
+                localStorage.removeItem("linny_view_v1");
+                localStorage.removeItem("linny_last_result_v1");
+              } catch {
+                /* ignore */
+              }
+              window.location.replace("/");
+            }}
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
-          </a>
+            Boshidan boshlash
+          </button>
+
         </div>
       </div>
     </div>

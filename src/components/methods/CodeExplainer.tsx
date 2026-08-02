@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { explainCodeText } from "@/lib/ai.functions";
-import { aiErrorMessage } from "@/lib/ai-error";
+import { aiErrorMessage, cleanAiError } from "@/lib/ai-error";
 import type { Profile } from "@/lib/types";
 
 interface Props { profile: Profile; onBack: () => void }
@@ -24,7 +24,7 @@ export default function CodeExplainer({ profile, onBack }: Props) {
     try {
       const r = await fn({ data: { input, age: profile.age ?? 20 } });
       if (!r.ok) {
-        setError(r.error);
+        setError(cleanAiError(r.error));
         return;
       }
       setResult(r.data);

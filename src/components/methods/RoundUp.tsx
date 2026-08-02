@@ -1,3 +1,4 @@
+import { cleanAiError } from "@/lib/ai-error";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { scanRoundUpPage, guideRoundUpTask } from "@/lib/roundup.functions";
@@ -145,7 +146,7 @@ export default function RoundUp({ onBack }: Props) {
     try {
       const r = await scan({ data: { images, description: description.trim() || undefined } });
       if (r.error) {
-        setErr(r.error);
+        setErr(cleanAiError(r.error));
         setStep("collect");
         return;
       }
@@ -182,7 +183,7 @@ export default function RoundUp({ onBack }: Props) {
         data: { images, taskRef: ref, description: description.trim() || undefined, mode, userNote: note },
       });
       if (r.error) {
-        setErr(r.error);
+        setErr(cleanAiError(r.error));
         return;
       }
       if (mode === "guide") setGuide(r.text);

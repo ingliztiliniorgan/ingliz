@@ -3,6 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { genDailyChallenge, gradeTranslation, type DailyTask } from "@/lib/ai.functions";
 import type { Profile } from "@/lib/types";
 import { updateProfile } from "@/lib/profile";
+import { aiErrorMessage, isAuthError } from "@/lib/ai-error";
+import { lovable } from "@/integrations/lovable";
+
 
 interface Props { profile: Profile; onBack: () => void }
 
@@ -13,21 +16,25 @@ export default function DailyChallenge({ profile, onBack }: Props) {
   const [idx, setIdx] = useState(0);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [needAuth, setNeedAuth] = useState(false);
   const [loading, setLoading] = useState(true);
   const started = useRef(false);
 
   async function load() {
     setLoading(true);
     setErr(null);
+    setNeedAuth(false);
     try {
       const t = await gen({ data: { age: profile.age ?? 20, level: profile.levelChosen ?? "past" } });
       setTasks(t);
     } catch (e) {
-      setErr((e as Error).message || "Yuklashda xatolik");
+      setNeedAuth(isAuthError(e));
+      setErr(aiErrorMessage(e));
     } finally {
       setLoading(false);
     }
   }
+
 
   useEffect(() => {
     if (started.current) return;
@@ -48,13 +55,25 @@ export default function DailyChallenge({ profile, onBack }: Props) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="card-surface p-6 max-w-md text-center">
-          <div className="text-3xl">😕</div>
-          <div className="mt-2 font-semibold">Vazifalarni yuklab bo'lmadi</div>
+          <div className="text-3xl">{needAuth ? "🔐" : "😕"}</div>
+          <div className="mt-2 font-semibold">
+            {needAuth ? "Google bilan kirish kerak" : "Vazifalarni yuklab bo'lmadi"}
+          </div>
           {err && <div className="mt-1 text-xs text-muted-foreground break-words">{err}</div>}
           <div className="mt-4 flex gap-2 justify-center">
-            <button onClick={load} className="btn-primary">Qayta urinish</button>
+            {needAuth ? (
+              <button
+                onClick={() => lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })}
+                className="btn-primary"
+              >
+                Google bilan kirish
+              </button>
+            ) : (
+              <button onClick={load} className="btn-primary">Qayta urinish</button>
+            )}
             <button onClick={onBack} className="btn-ghost">Orqaga</button>
           </div>
+
         </div>
       </div>
     );

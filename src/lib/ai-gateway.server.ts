@@ -1,16 +1,10 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-// Translate Gemini API errors into clear Uzbek messages, retrying rate limits.
+// Translate Gemini API errors into clear Uzbek messages. Do not automatically
+// resend a quota-limited image request: the SDK also retries by default and the
+// combined retries can consume even more of the user's Gemini quota.
 const friendlyFetch: typeof fetch = async (input, init) => {
-  const MAX_RETRIES = 3;
-  let res = await fetch(input, init);
-
-  for (let attempt = 0; attempt < MAX_RETRIES && (res.status === 429 || res.status >= 500); attempt++) {
-    await sleep(1500 * (attempt + 1) + Math.floor(Math.random() * 500));
-    res = await fetch(input, init);
-  }
+  const res = await fetch(input, init);
 
   if (res.ok) return res;
   const text = await res.clone().text().catch(() => "");

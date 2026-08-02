@@ -144,6 +144,11 @@ export default function RoundUp({ onBack }: Props) {
     setStep("scanning");
     try {
       const r = await scan({ data: { images, description: description.trim() || undefined } });
+      if (r.error) {
+        setErr(r.error);
+        setStep("collect");
+        return;
+      }
       setTasks(r.tasks);
       setUnclear(r.unclear);
       const many = r.tasks.length > 1;
@@ -176,6 +181,10 @@ export default function RoundUp({ onBack }: Props) {
       const r = await askGuide({
         data: { images, taskRef: ref, description: description.trim() || undefined, mode, userNote: note },
       });
+      if (r.error) {
+        setErr(r.error);
+        return;
+      }
       if (mode === "guide") setGuide(r.text);
       if (mode === "simple") setHelpText(r.text);
       if (mode === "answer") setAnswerText(r.text);
@@ -371,6 +380,11 @@ export default function RoundUp({ onBack }: Props) {
             <div className="mt-3 space-y-1 leading-relaxed">{simpleMarkdown(guide)}</div>
           )}
           {err && <div className="mt-3 text-sm text-red-500">{err}</div>}
+          {err && !loading && (
+            <button onClick={() => void loadGuide(ref, "guide")} className="btn-ghost mt-3">
+              Qayta urinish
+            </button>
+          )}
 
           {guide.includes("Tushunmadim") && (
             <div className="mt-4">

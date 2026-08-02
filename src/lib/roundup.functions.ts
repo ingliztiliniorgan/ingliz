@@ -36,10 +36,12 @@ export const scanRoundUpPage = createServerFn({ method: "POST" })
       unclear: z.string(),
     });
 
-    const { output } = await generateText({
-      model: gw(MODEL),
-      output: Output.object({ schema: Schema }),
-      messages: [
+    try {
+      const { output } = await generateText({
+        model: gw(MODEL),
+        maxRetries: 0,
+        output: Output.object({ schema: Schema }),
+        messages: [
         {
           role: "user",
           content: [
@@ -60,10 +62,14 @@ Javob ni HECH QACHON yozmang — faqat topshiriqlar ro'yxati.
             ...imageParts(data.images),
           ],
         },
-      ],
-    });
+        ],
+      });
 
-    return { tasks: output.tasks, unclear: output.unclear?.trim() ?? "" };
+      return { tasks: output.tasks, unclear: output.unclear?.trim() ?? "", error: null };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Sahifani tahlil qilib bo'lmadi.";
+      return { tasks: [], unclear: "", error: message };
+    }
   });
 
 // ============ 2. Teach how to solve (never the answer) ============
@@ -92,9 +98,11 @@ QAT'IY TAQIQ: topshiriqning javoblarini yozmang, javobga yaqin ham keltirmang, b
 QAT'IY TAQIQ: baribir topshiriqning javoblarini yozmang va javobga yaqin ham keltirmang.`
           : `USLUB: Foydalanuvchi javobni ko'rishni tanladi. Endi TO'G'RI JAVOBLARNI to'liq yozing (har bir bo'sh joy / band uchun), so'ng har bir javob NEGA to'g'ri ekanini batafsil tushuntiring.`;
 
-    const { text } = await generateText({
-      model: gw(MODEL),
-      messages: [
+    try {
+      const { text } = await generateText({
+        model: gw(MODEL),
+        maxRetries: 0,
+        messages: [
         {
           role: "user",
           content: [
@@ -115,8 +123,12 @@ Agar sahifadagi biror joyni aniq o'qiy olmasangiz, boshida "⚠️ Tushunmadim:"
             ...imageParts(data.images),
           ],
         },
-      ],
-    });
+        ],
+      });
 
-    return { text };
+      return { text, error: null };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "AI javob bera olmadi.";
+      return { text: "", error: message };
+    }
   });

@@ -97,9 +97,11 @@ export function useSessionProfile() {
 
     (async () => {
       const local = loadProfile();
+      // Show the app with local data even if the cloud round-trip is slow.
+      const guard = setTimeout(() => setReady(true), 8000);
       let merged: Profile = local;
       try {
-        const cloud = await pull();
+        const cloud = await withTimeout(pull(), 7000);
         const cloudDefined = Object.fromEntries(
           Object.entries(cloud ?? {}).filter(([, v]) => v !== undefined && v !== null),
         ) as Partial<Profile>;
@@ -118,17 +120,22 @@ export function useSessionProfile() {
         }
         saveProfile(merged);
         setProfile(merged);
-        await push({ data: cloudPatchOf(merged) });
-        const { streak } = await mark();
-        merged = updateProfile({ streak });
-        setProfile(merged);
+        setReady(true);
+        await withTimeout(push({ data: cloudPatchOf(merged) }), 7000);
+        const res = await withTimeout(mark(), 7000);
+        if (res?.streak != null) {
+          merged = updateProfile({ streak: res.streak });
+          setProfile(merged);
+        }
       } catch (e) {
         console.warn("cloud sync failed", e);
         setProfile(merged);
       } finally {
+        clearTimeout(guard);
         setReady(true);
       }
     })();
+
   }, [authReady, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Update local state (+ localStorage) and push to cloud when signed in. */

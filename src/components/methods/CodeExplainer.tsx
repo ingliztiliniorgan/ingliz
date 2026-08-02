@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { explainCodeText } from "@/lib/ai.functions";
+import { aiErrorMessage } from "@/lib/ai-error";
 import type { Profile } from "@/lib/types";
 
 interface Props { profile: Profile; onBack: () => void }
@@ -15,12 +16,16 @@ export default function CodeExplainer({ profile, onBack }: Props) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function run() {
     setLoading(true);
+    setError(null);
     try {
       const r = await fn({ data: { input, age: profile.age ?? 20 } });
       setResult(r);
+    } catch (e) {
+      setError(aiErrorMessage(e));
     } finally { setLoading(false); }
   }
 
@@ -37,6 +42,15 @@ export default function CodeExplainer({ profile, onBack }: Props) {
         className="btn-primary mt-3 disabled:opacity-40">
         {loading ? "Tushuntirilmoqda..." : "Tushuntir"}
       </button>
+
+      {error && (
+        <div role="alert" className="card-surface mt-4 p-4">
+          <p className="text-sm">{error}</p>
+          <button onClick={run} disabled={loading} className="btn-ghost mt-3 text-sm disabled:opacity-40">
+            Qayta urinish
+          </button>
+        </div>
+      )}
 
       {result && (
         <div className="mt-6 space-y-4">

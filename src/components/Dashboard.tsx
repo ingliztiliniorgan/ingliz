@@ -5,6 +5,7 @@ import { ageBandOf } from "@/lib/theme";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthUser } from "@/hooks/useCloudSync";
 import { useNavigate } from "@tanstack/react-router";
+import { openApiKeyDialog } from "@/components/ApiKeyDialog";
 
 interface Props {
   profile: Profile;
@@ -85,8 +86,11 @@ export default function Dashboard({ profile, onStartLearning, onOpenMistakes, on
       <div className="mt-4 p-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 text-sm">
         <div className="font-semibold">✨ AI: Google Gemini</div>
         <p className="mt-1 text-muted-foreground">
-          Sayt endi to'g'ridan-to'g'ri Google Gemini API orqali ishlaydi — limitlar keng. Agar limit xatosi chiqsa, biroz kuting va qayta urinib ko'ring.
+          Bir nechta Gemini API kalit ulangan — birining limiti tugasa, avtomatik keyingisiga o'tadi.
         </p>
+        <button onClick={() => openApiKeyDialog(false)} className="btn-primary mt-3 text-sm">
+          🔑 Yangi API ulash
+        </button>
       </div>
 
 

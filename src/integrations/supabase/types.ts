@@ -32,6 +32,33 @@ export type Database = {
         }
         Relationships: []
       }
+      gemini_keys: {
+        Row: {
+          active: boolean
+          added_by: string | null
+          api_key: string
+          created_at: string
+          id: string
+          label: string | null
+        }
+        Insert: {
+          active?: boolean
+          added_by?: string | null
+          api_key: string
+          created_at?: string
+          id?: string
+          label?: string | null
+        }
+        Update: {
+          active?: boolean
+          added_by?: string | null
+          api_key?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+        }
+        Relationships: []
+      }
       learned_words: {
         Row: {
           created_at: string

@@ -16,7 +16,16 @@ export function useAuthUser() {
   return user;
 }
 
+/** Resolve to null instead of hanging forever when the network stalls. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | null> {
+  return Promise.race([
+    p,
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
+  ]);
+}
+
 function cloudPatchOf(p: Profile) {
+
   return {
     name: p.name,
     gender: p.gender,

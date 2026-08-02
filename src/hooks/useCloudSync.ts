@@ -51,20 +51,32 @@ export function useSessionProfile() {
 
   useEffect(() => {
     let alive = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!alive) return;
-      setUser(data.session?.user ?? null);
-      setAuthReady(true);
-    });
+    // getSession() can hang (offline, blocked storage, token refresh stall).
+    // Never let that freeze the whole app on the loading screen.
+    const timer = setTimeout(() => {
+      if (alive) setAuthReady(true);
+    }, 3000);
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!alive) return;
+        setUser(data.session?.user ?? null);
+        setAuthReady(true);
+      })
+      .catch(() => {
+        if (alive) setAuthReady(true);
+      });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setUser(s?.user ?? null);
       setAuthReady(true);
     });
     return () => {
       alive = false;
+      clearTimeout(timer);
       sub.subscription.unsubscribe();
     };
   }, []);
+
 
   useEffect(() => {
     if (!authReady) return;

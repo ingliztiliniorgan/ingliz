@@ -5,6 +5,7 @@ import type { Profile } from "@/lib/types";
 import { updateProfile } from "@/lib/profile";
 import { aiErrorMessage, isAuthError } from "@/lib/ai-error";
 import { lovable } from "@/integrations/lovable";
+import { supabase } from "@/integrations/supabase/client";
 
 
 interface Props { profile: Profile; onBack: () => void }
@@ -25,6 +26,14 @@ export default function DailyChallenge({ profile, onBack }: Props) {
     setErr(null);
     setNeedAuth(false);
     try {
+      // Protected server functions need the current access token. Confirm the
+      // browser session first so an anonymous visit never sends a doomed RPC.
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session?.access_token) {
+        setNeedAuth(true);
+        setErr("AI funksiyalari uchun Google bilan kirish kerak.");
+        return;
+      }
       const t = await gen({ data: { age: profile.age ?? 20, level: profile.levelChosen ?? "past" } });
       setTasks(t);
     } catch (e) {

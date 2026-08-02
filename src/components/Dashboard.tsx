@@ -48,6 +48,14 @@ export default function Dashboard({ profile, onStartLearning, onOpenMistakes, on
     navigate({ to: "/auth" });
   }
 
+  function openDailyChallenge() {
+    if (!user) {
+      navigate({ to: "/auth" });
+      return;
+    }
+    onDailyChallenge();
+  }
+
   const difficulty = profile.difficulty ?? "orta";
 
   return (
@@ -138,7 +146,7 @@ export default function Dashboard({ profile, onStartLearning, onOpenMistakes, on
           <p className="mt-2 text-sm text-muted-foreground">
             Har kuni: 1 quiz + 1 tarjima + 1 so'z. Streak ni saqlang.
           </p>
-          <button onClick={onDailyChallenge} disabled={dailyDone}
+          <button onClick={openDailyChallenge} disabled={dailyDone}
             className="btn-primary mt-4 disabled:opacity-40">
             {dailyDone ? "Ertaga qaytamiz" : "Boshlash"}
           </button>

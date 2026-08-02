@@ -55,13 +55,25 @@ export default function DailyChallenge({ profile, onBack }: Props) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="card-surface p-6 max-w-md text-center">
-          <div className="text-3xl">😕</div>
-          <div className="mt-2 font-semibold">Vazifalarni yuklab bo'lmadi</div>
+          <div className="text-3xl">{needAuth ? "🔐" : "😕"}</div>
+          <div className="mt-2 font-semibold">
+            {needAuth ? "Google bilan kirish kerak" : "Vazifalarni yuklab bo'lmadi"}
+          </div>
           {err && <div className="mt-1 text-xs text-muted-foreground break-words">{err}</div>}
           <div className="mt-4 flex gap-2 justify-center">
-            <button onClick={load} className="btn-primary">Qayta urinish</button>
+            {needAuth ? (
+              <button
+                onClick={() => lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })}
+                className="btn-primary"
+              >
+                Google bilan kirish
+              </button>
+            ) : (
+              <button onClick={load} className="btn-primary">Qayta urinish</button>
+            )}
             <button onClick={onBack} className="btn-ghost">Orqaga</button>
           </div>
+
         </div>
       </div>
     );

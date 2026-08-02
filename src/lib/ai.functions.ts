@@ -295,26 +295,37 @@ export const explainCodeText = createServerFn({ method: "POST" })
     z.object({ input: z.string().min(3), age: z.number().int() }).parse(d),
   )
   .handler(async ({ data }) => {
-    const gw = getGateway();
-    const prompt = `${ageDescriptor(data.age)}
+    try {
+      const gw = getGateway();
+      const prompt = `${ageDescriptor(data.age)}
 Foydalanuvchi inglizcha matn yoki kod parchasini yubordi. Uni o'zbek tilida tushuntir. Agar kod bo'lsa — nima qilishini, agar matn bo'lsa — mazmunini va notanish so'zlarni tarjima qil.
 
 Kirish:
 """${data.input}"""
 
 JSON: {"summary":"1-2 gap o'zbekcha xulosa", "lineByLine":[{"en":"...","uz":"..."}], "vocab":[{"word":"...","meaning":"..."}]}`;
-    const Schema = z.object({
-      summary: z.string(),
-      lineByLine: z.array(z.object({ en: z.string(), uz: z.string() })),
-      vocab: z.array(z.object({ word: z.string(), meaning: z.string() })).default([]),
-    });
-    const { output } = await generateText({
-      model: gw(MODEL),
-      output: Output.object({ schema: Schema }),
-      prompt,
-      maxRetries: 0,
-    });
-    return output;
+      const Schema = z.object({
+        summary: z.string(),
+        lineByLine: z.array(z.object({ en: z.string(), uz: z.string() })),
+        vocab: z.array(z.object({ word: z.string(), meaning: z.string() })).default([]),
+      });
+      const { output } = await generateText({
+        model: gw(MODEL),
+        output: Output.object({ schema: Schema }),
+        prompt,
+        maxRetries: 0,
+      });
+      return { ok: true as const, data: output };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "AI javob bera olmadi";
+      if (/limit|429|quota|resource_exhausted/i.test(message)) {
+        return {
+          ok: false as const,
+          error: "Gemini so'rovlari limiti tugadi. 1-2 daqiqa kutib, qayta urinib ko'ring.",
+        };
+      }
+      return { ok: false as const, error: message };
+    }
   });
 
 // Daily challenge — 3 mixed mini-tasks

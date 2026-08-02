@@ -16,21 +16,25 @@ export default function DailyChallenge({ profile, onBack }: Props) {
   const [idx, setIdx] = useState(0);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [needAuth, setNeedAuth] = useState(false);
   const [loading, setLoading] = useState(true);
   const started = useRef(false);
 
   async function load() {
     setLoading(true);
     setErr(null);
+    setNeedAuth(false);
     try {
       const t = await gen({ data: { age: profile.age ?? 20, level: profile.levelChosen ?? "past" } });
       setTasks(t);
     } catch (e) {
-      setErr((e as Error).message || "Yuklashda xatolik");
+      setNeedAuth(isAuthError(e));
+      setErr(aiErrorMessage(e));
     } finally {
       setLoading(false);
     }
   }
+
 
   useEffect(() => {
     if (started.current) return;

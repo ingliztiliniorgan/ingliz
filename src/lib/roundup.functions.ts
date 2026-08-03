@@ -94,6 +94,7 @@ QAT'IY TAQIQ: baribir topshiriqning javoblarini yozmang va javobga yaqin ham kel
               text: `${ROUNDUP_READING_RULES}
 
 Siz o'zbek tilida gaplashadigan ingliz tili ustozisiz. Foydalanuvchi ingliz tilini yangi boshlagan.
+Salomlashmang, o'zingizni tanishtirmang va kirish gaplarini yozmang — darhol topshiriq tushuntirishidan boshlang.
 Yordam kerak bo'lgan topshiriq: ${data.taskRef}
 ${data.description ? `Foydalanuvchi izohi: ${data.description}` : ""}
 ${data.userNote ? `Foydalanuvchi qo'shimchasi: ${data.userNote}` : ""}

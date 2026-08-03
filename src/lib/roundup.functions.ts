@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { generateText } from "ai";
-import { getGateway } from "./ai-gateway.server";
 
 // ============ 1. Scan the uploaded page(s) and list the exercises ============
 export const scanRoundUpPage = createServerFn({ method: "POST" })
@@ -17,6 +16,7 @@ export const scanRoundUpPage = createServerFn({ method: "POST" })
       parseRoundUpScan,
       roundUpImageParts,
     } = await import("./roundup.server");
+    const { getGateway } = await import("./ai-gateway.server");
     const gw = getGateway();
 
     try {
@@ -69,6 +69,7 @@ export const guideRoundUpTask = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { ROUNDUP_MODEL, ROUNDUP_READING_RULES, roundUpImageParts } = await import("./roundup.server");
+    const { getGateway } = await import("./ai-gateway.server");
     const gw = getGateway();
 
     const modeRules =

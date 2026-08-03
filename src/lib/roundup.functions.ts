@@ -1,71 +1,52 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { generateText, Output } from "ai";
-import { getGateway } from "./ai-gateway.server";
-
-const MODEL = "gemini-flash-latest";
-
-const ImagesSchema = z.array(z.string().min(20)).min(1).max(6);
-
-const READING_RULES = `Rasmlar "NEW Round-Up" ingliz tili mashq daftaridan olingan. Kitob eski, qog'oz sifati past, rasmlar xira bo'lishi mumkin.
-Juda sinchkovlik bilan tekshiring: har bir raqam, chiziq, bo'sh joy (____), jadval katakchasi, crossword to'rlari, kichik rasmchalar va yo'riqnoma matnini alohida ko'rib chiqing.
-Agar biror joyni ANIQ o'qiy olmasangiz — taxmin qilmang, "unclear" maydonida qaysi joy tushunarsizligini o'zbekcha aniq yozing.`;
-
-const TaskSchema = z.object({
-  page: z.number(),
-  number: z.string(),
-  title: z.string(),
-  type: z.string(),
-});
-
-function imageParts(images: string[]) {
-  return images.map((img) => ({ type: "image" as const, image: img }));
-}
+import { generateText } from "ai";
 
 // ============ 1. Scan the uploaded page(s) and list the exercises ============
 export const scanRoundUpPage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ images: ImagesSchema, description: z.string().max(1000).optional() }).parse(d),
+    z.object({ images: z.array(z.string().min(20)).min(1).max(6), description: z.string().max(1000).optional() }).parse(d),
   )
   .handler(async ({ data }) => {
+    const {
+      ROUNDUP_MODEL,
+      ROUNDUP_READING_RULES,
+      parseRoundUpScan,
+      roundUpImageParts,
+    } = await import("./roundup.server");
+    const { getGateway } = await import("./ai-gateway.server");
     const gw = getGateway();
-    const Schema = z.object({
-      tasks: z.array(TaskSchema),
-      unclear: z.string(),
-    });
 
     try {
-      const { output } = await generateText({
-        model: gw(MODEL),
+      const { text } = await generateText({
+        model: gw(ROUNDUP_MODEL),
         maxRetries: 0,
-        output: Output.object({ schema: Schema }),
         messages: [
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: `${READING_RULES}
+              text: `${ROUNDUP_READING_RULES}
 
 Vazifa: yuborilgan ${data.images.length} ta sahifadagi BARCHA topshiriqlarni aniqlang.
-Har bir topshiriq uchun:
-- "page": sahifa tartib raqami (1 dan boshlab, yuborilgan rasmlar tartibida)
-- "number": kitobdagi topshiriq raqami (masalan "1", "2", "A", "B")
-- "title": topshiriq nima qilishni so'rayotgani — o'zbekcha 1 qisqa gap
-- "type": turi (masalan "bo'sh joyni to'ldirish", "crossword", "rasmga mos so'z", "gap tuzish")
+Har bir topshiriqni AYNAN bitta qatorda shu ko'rinishda yozing:
+TASK | sahifa_tartib_raqami | topshiriq_raqami | o'zbekcha_qisqa_mazmun | mashq_turi
 
 Javob ni HECH QACHON yozmang — faqat topshiriqlar ro'yxati.
-"unclear": agar biror sahifa yoki rasm tushunarsiz bo'lsa, o'zbekcha aniq yozing; aks holda bo'sh matn qoldiring.`,
+Agar biror joy tushunarsiz bo'lsa oxirida "UNCLEAR | o'zbekcha izoh" yozing.
+JSON yozmang, markdown jadval yoki code fence ishlatmang.`,
             },
-            ...imageParts(data.images),
+            ...roundUpImageParts(data.images),
           ],
         },
         ],
       });
 
-      return { tasks: output.tasks, unclear: output.unclear?.trim() ?? "", error: null };
+      const parsed = parseRoundUpScan(text);
+      return { tasks: parsed.tasks, unclear: parsed.unclear, error: null };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sahifani tahlil qilib bo'lmadi.";
       return { tasks: [], unclear: "", error: message };
@@ -78,7 +59,7 @@ export const guideRoundUpTask = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z
       .object({
-        images: ImagesSchema,
+        images: z.array(z.string().min(20)).min(1).max(6),
         taskRef: z.string().min(1),
         description: z.string().max(1000).optional(),
         mode: z.enum(["guide", "simple", "answer"]),
@@ -87,6 +68,8 @@ export const guideRoundUpTask = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    const { ROUNDUP_MODEL, ROUNDUP_READING_RULES, roundUpImageParts } = await import("./roundup.server");
+    const { getGateway } = await import("./ai-gateway.server");
     const gw = getGateway();
 
     const modeRules =
@@ -100,7 +83,7 @@ QAT'IY TAQIQ: baribir topshiriqning javoblarini yozmang va javobga yaqin ham kel
 
     try {
       const { text } = await generateText({
-        model: gw(MODEL),
+        model: gw(ROUNDUP_MODEL),
         maxRetries: 0,
         messages: [
         {
@@ -108,9 +91,10 @@ QAT'IY TAQIQ: baribir topshiriqning javoblarini yozmang va javobga yaqin ham kel
           content: [
             {
               type: "text",
-              text: `${READING_RULES}
+              text: `${ROUNDUP_READING_RULES}
 
 Siz o'zbek tilida gaplashadigan ingliz tili ustozisiz. Foydalanuvchi ingliz tilini yangi boshlagan.
+Salomlashmang, o'zingizni tanishtirmang va kirish gaplarini yozmang — darhol topshiriq tushuntirishidan boshlang.
 Yordam kerak bo'lgan topshiriq: ${data.taskRef}
 ${data.description ? `Foydalanuvchi izohi: ${data.description}` : ""}
 ${data.userNote ? `Foydalanuvchi qo'shimchasi: ${data.userNote}` : ""}
@@ -120,7 +104,7 @@ ${modeRules}
 Javobni o'zbek tilida, markdown sarlavha va ro'yxatlar bilan, tartibli yozing.
 Agar sahifadagi biror joyni aniq o'qiy olmasangiz, boshida "⚠️ Tushunmadim:" deb qaysi joy tushunarsizligini yozing va foydalanuvchidan tushuntirishni so'rang.`,
             },
-            ...imageParts(data.images),
+            ...roundUpImageParts(data.images),
           ],
         },
         ],

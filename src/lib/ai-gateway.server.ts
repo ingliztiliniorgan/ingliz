@@ -9,7 +9,8 @@ export const ALL_KEYS_EXHAUSTED = "ALL_KEYS_EXHAUSTED";
 //  1. Project secrets GEMINI_API_KEY, GEMINI_API_KEY_2..GEMINI_API_KEY_8
 //  2. Keys users connect from the app (public.gemini_keys), loaded with the
 //     service-role client so key values never reach the browser.
-const COOLDOWN_MS = 65_000; // Gemini free-tier limits reset per minute.
+const RATE_LIMIT_COOLDOWN_MS = 65_000; // Gemini free-tier limits reset per minute.
+const INVALID_KEY_COOLDOWN_MS = 30 * 60_000;
 const cooldown = new Map<string, number>();
 
 let dbKeysCache: { keys: string[]; at: number } = { keys: [], at: 0 };
@@ -48,8 +49,8 @@ async function dbKeys(): Promise<string[]> {
   }
 }
 
-export function markKeyExhausted(key: string) {
-  cooldown.set(key, Date.now() + COOLDOWN_MS);
+export function markKeyExhausted(key: string, duration = RATE_LIMIT_COOLDOWN_MS) {
+  cooldown.set(key, Date.now() + duration);
 }
 
 function isCooling(key: string) {
@@ -94,11 +95,16 @@ const rotatingFetch: typeof fetch = async (input, init) => {
   const keys = await allKeys();
   if (keys.length === 0) throw new Error("Missing GEMINI_API_KEY");
 
-  // Fresh keys first, then cooling ones as a last resort (their minute window
-  // may have already reset on Google's side).
+  // Never retry keys that are still cooling in the same request. Doing so made
+  // one user action consume every key again and falsely report pool exhaustion.
   const fresh = keys.filter((k) => !isCooling(k));
-  const cooling = keys.filter((k) => isCooling(k));
-  const order = fresh.length > 0 ? [...fresh, ...cooling] : cooling;
+  const order = fresh;
+
+  if (order.length === 0) {
+    throw new Error(
+      `${ALL_KEYS_EXHAUSTED}: Barcha ulangan API kalitlari vaqtincha kutish rejimida (${keys.length} ta kalit). 1-2 daqiqadan keyin qayta urinib ko'ring.`,
+    );
+  }
 
   let lastMessage = "";
   for (const key of order) {
@@ -125,7 +131,7 @@ const rotatingFetch: typeof fetch = async (input, init) => {
       continue; // try the next key
     }
     if (res.status === 401 || res.status === 403) {
-      markKeyExhausted(key);
+      markKeyExhausted(key, INVALID_KEY_COOLDOWN_MS);
       continue; // bad/expired key — skip it and try another
     }
     if (res.status === 402) {

@@ -166,7 +166,7 @@ export default function RoundUp({ onBack }: Props) {
         setStep("choose");
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Tahlil qilinmadi");
+      setErr(cleanAiError(e instanceof Error ? e.message : "Tahlil qilinmadi"));
       setStep("collect");
     }
   }
@@ -190,7 +190,7 @@ export default function RoundUp({ onBack }: Props) {
       if (mode === "simple") setHelpText(r.text);
       if (mode === "answer") setAnswerText(r.text);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "AI javob bermadi");
+      setErr(cleanAiError(e instanceof Error ? e.message : "AI javob bermadi"));
     } finally {
       setLoading(false);
     }

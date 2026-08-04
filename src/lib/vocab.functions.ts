@@ -37,13 +37,14 @@ export const ensureTodaysWords = createServerFn({ method: "POST" })
     // Get profile config
     const { data: profile } = await supabase
       .from("profiles")
-      .select("daily_word_count, vocab_last_generated, level_chosen, age")
+      .select("daily_word_count, vocab_last_generated, level_chosen, age, vocab_source, vocab_bank_ready, vocab_last_test_date")
       .eq("user_id", userId)
       .maybeSingle();
 
     const dailyCount = (profile?.daily_word_count as number) ?? 10;
     const level = (profile?.level_chosen as string) ?? "past";
     const age = (profile?.age as number) ?? 20;
+    const usePdfBank = profile?.vocab_source === "pdf" && !!profile?.vocab_bank_ready;
 
     // Roll over: any pending word from earlier days → move to today
     await supabase
@@ -72,9 +73,38 @@ export const ensureTodaysWords = createServerFn({ method: "POST" })
         .limit(200);
       const seen = new Set((learnedRows ?? []).map((r) => (r.word as string).toLowerCase()));
 
-      // Generate new words via AI
       const gw = getGateway();
-      const prompt = `Sen ingliz tili o'qituvchisi. ${ageContext(age)} Daraja: ${levelDescriptor(level)}
+      const Schema = z.object({ items: z.array(WordSchema).min(1).max(30) });
+
+      // --- Source 1: the user's own PDF word bank (Oxford list). Words come in
+      // CEFR order (A1 → C2), so difficulty grows naturally over the months.
+      let bankPicked: { id: string; word: string; cefr: string }[] = [];
+      if (usePdfBank) {
+        const { data: bank } = await supabase
+          .from("vocab_bank")
+          .select("id, word, cefr")
+          .eq("user_id", userId)
+          .eq("used", false)
+          .order("level_rank", { ascending: true })
+          .order("position", { ascending: true })
+          .limit(need);
+        bankPicked = (bank ?? []) as { id: string; word: string; cefr: string }[];
+      }
+
+      const prompt = bankPicked.length
+        ? `Sen ingliz tili o'qituvchisisan. Quyidagi inglizcha so'zlar (Oxford ro'yxatidan, darajasi bilan) uchun o'zbek tilida ma'lumot tayyorla.
+So'zlar: ${bankPicked.map((b) => `${b.word} (${b.cefr})`).join(", ")}
+
+Har bir so'z uchun AYNAN shu so'zni saqlab:
+- "word": aynan berilgan inglizcha so'z (kichik harflarda, o'zgartirmang)
+- "translation": o'zbekcha tarjima (asosiy ma'nosi)
+- "pronunciation": o'zbekcha harflarda talaffuz (masalan "beautiful" → "byu-ti-ful")
+- "example": so'z ishlatilgan oddiy inglizcha gap
+- "example_uz": gapning o'zbekcha tarjimasi
+- "topic": qisqa mavzu tegi
+
+Barcha ${bankPicked.length} ta so'zni qaytar. JSON: {"items":[...]}`
+        : `Sen ingliz tili o'qituvchisi. ${ageContext(age)} Daraja: ${levelDescriptor(level)}
 Foydalanuvchi uchun bugungi ${need} ta yangi inglizcha so'z tanlang. Real suhbatda tez-tez ishlatiladigan, foydali so'zlar bo'lsin.
 
 Quyidagi so'zlarni TAKRORLAMANG: ${Array.from(seen).slice(0, 100).join(", ") || "(hech qanday)"}
@@ -89,36 +119,44 @@ Har biri uchun:
 
 JSON: {"items":[...]}`;
 
-      const Schema = z.object({ items: z.array(WordSchema).min(1).max(30) });
       const { output } = await generateText({
         model: gw(MODEL),
         output: Output.object({ schema: Schema }),
         prompt,
       });
 
+      const allowed = new Set(bankPicked.map((b) => b.word));
       const rows = output.items
-        .filter((w) => !seen.has(w.word.toLowerCase()))
+        .map((w) => ({ ...w, word: w.word.toLowerCase().trim() }))
+        .filter((w) => (bankPicked.length ? allowed.has(w.word) : !seen.has(w.word)))
         .slice(0, need)
         .map((w) => ({
           user_id: userId,
-          word: w.word.toLowerCase().trim(),
+          word: w.word,
           translation: w.translation,
           pronunciation: w.pronunciation,
           example: w.example,
           example_uz: w.example_uz,
-          topic: w.topic,
+          topic: bankPicked.find((b) => b.word === w.word)?.cefr ?? w.topic,
           assigned_date: today,
           status: "pending",
         }));
 
       if (rows.length > 0) {
         await supabase.from("vocab_words").insert(rows);
+        if (bankPicked.length) {
+          const doneIds = bankPicked.filter((b) => rows.some((r) => r.word === b.word)).map((b) => b.id);
+          if (doneIds.length) {
+            await supabase.from("vocab_bank").update({ used: true }).in("id", doneIds);
+          }
+        }
       }
       await supabase
         .from("profiles")
         .update({ vocab_last_generated: today })
         .eq("user_id", userId);
     }
+
 
     // Return today's words
     const { data: words } = await supabase

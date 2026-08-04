@@ -137,15 +137,26 @@ const rotatingFetch: typeof fetch = async (input, init) => {
     if (res.status === 402) {
       throw new Error("Gemini hisobida to'lov muammosi bor.");
     }
+    if (res.status >= 500) {
+      // Transient Gemini overload (503) — short pause, then try the next key.
+      lastMessage = message || `Server vaqtincha band (${res.status})`;
+      await new Promise((r) => setTimeout(r, 700));
+      continue;
+    }
     throw new Error(`AI xatosi (${res.status}): ${message || "noma'lum"}`);
   }
 
+  if (lastMessage && !/quota|resource_exhausted|rate limit/i.test(lastMessage)) {
+    throw new Error(
+      "Gemini serveri hozir juda band (503). Iltimos, 10-20 soniyadan keyin qayta urinib ko'ring.",
+    );
+  }
+
   throw new Error(
-    `${ALL_KEYS_EXHAUSTED}: Barcha ulangan API kalitlarida limit tugadi (${keys.length} ta kalit). Yangi API kalit ulang yoki 1-2 daqiqa kutib qayta urinib ko'ring.${
-      lastMessage ? "" : ""
-    }`,
+    `${ALL_KEYS_EXHAUSTED}: Barcha ulangan API kalitlarida limit tugadi (${keys.length} ta kalit). Yangi API kalit ulang yoki 1-2 daqiqa kutib qayta urinib ko'ring.`,
   );
 };
+
 
 // Gemini exposes an OpenAI-compatible endpoint at
 // https://generativelanguage.googleapis.com/v1beta/openai/

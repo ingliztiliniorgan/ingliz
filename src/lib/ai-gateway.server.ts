@@ -53,6 +53,17 @@ export function markKeyExhausted(key: string, duration = RATE_LIMIT_COOLDOWN_MS)
   cooldown.set(key, Date.now() + duration);
 }
 
+/**
+ * Called right after a user connects a new key: forget the cached DB key list
+ * and clear every cooldown so the fresh key is usable immediately.
+ */
+export function invalidateKeyCache(newKey?: string) {
+  dbKeysCache = { keys: [], at: 0 };
+  cooldown.clear();
+  if (newKey) cooldown.delete(newKey);
+}
+
+
 function isCooling(key: string) {
   const until = cooldown.get(key);
   if (!until) return false;

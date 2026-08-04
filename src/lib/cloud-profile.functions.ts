@@ -16,6 +16,7 @@ const ProfilePatch = z.object({
   onboardedProfile: z.boolean().optional(),
   linnyIntroSeen: z.boolean().optional(),
   lastView: z.string().max(40).optional(),
+  email: z.string().email().max(200).optional(),
 });
 
 function rowToProfile(row: Record<string, unknown>): Profile {
@@ -34,6 +35,7 @@ function rowToProfile(row: Record<string, unknown>): Profile {
     onboardedProfile: (row.onboarded as boolean) ?? false,
     linnyIntroSeen: (row.linny_intro_seen as boolean) ?? false,
     lastView: (row.last_view as string) ?? undefined,
+    email: (row.email as string) ?? undefined,
   };
 }
 
@@ -67,6 +69,7 @@ export const saveMyProfile = createServerFn({ method: "POST" })
       onboarded: data.onboardedProfile,
       linny_intro_seen: data.linnyIntroSeen,
       last_view: data.lastView,
+      email: data.email,
     };
     const { error } = await context.supabase.from("profiles").upsert(row, { onConflict: "user_id" });
     if (error) throw error;

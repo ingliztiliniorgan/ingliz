@@ -126,6 +126,7 @@ export type Database = {
           created_at: string
           daily_word_count: number
           difficulty: string
+          email: string | null
           gender: string | null
           last_view: string | null
           last_visit: string | null
@@ -140,9 +141,11 @@ export type Database = {
           theme: string
           updated_at: string
           user_id: string
+          vocab_bank_ready: boolean
           vocab_last_generated: string | null
           vocab_last_test_date: string | null
           vocab_setup_done: boolean
+          vocab_source: string | null
         }
         Insert: {
           age?: number | null
@@ -150,6 +153,7 @@ export type Database = {
           created_at?: string
           daily_word_count?: number
           difficulty?: string
+          email?: string | null
           gender?: string | null
           last_view?: string | null
           last_visit?: string | null
@@ -164,9 +168,11 @@ export type Database = {
           theme?: string
           updated_at?: string
           user_id: string
+          vocab_bank_ready?: boolean
           vocab_last_generated?: string | null
           vocab_last_test_date?: string | null
           vocab_setup_done?: boolean
+          vocab_source?: string | null
         }
         Update: {
           age?: number | null
@@ -174,6 +180,7 @@ export type Database = {
           created_at?: string
           daily_word_count?: number
           difficulty?: string
+          email?: string | null
           gender?: string | null
           last_view?: string | null
           last_visit?: string | null
@@ -188,9 +195,47 @@ export type Database = {
           theme?: string
           updated_at?: string
           user_id?: string
+          vocab_bank_ready?: boolean
           vocab_last_generated?: string | null
           vocab_last_test_date?: string | null
           vocab_setup_done?: boolean
+          vocab_source?: string | null
+        }
+        Relationships: []
+      }
+      vocab_bank: {
+        Row: {
+          cefr: string
+          created_at: string
+          id: string
+          level_rank: number
+          position: number
+          translation: string | null
+          used: boolean
+          user_id: string
+          word: string
+        }
+        Insert: {
+          cefr?: string
+          created_at?: string
+          id?: string
+          level_rank?: number
+          position?: number
+          translation?: string | null
+          used?: boolean
+          user_id: string
+          word: string
+        }
+        Update: {
+          cefr?: string
+          created_at?: string
+          id?: string
+          level_rank?: number
+          position?: number
+          translation?: string | null
+          used?: boolean
+          user_id?: string
+          word?: string
         }
         Relationships: []
       }

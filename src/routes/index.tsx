@@ -13,6 +13,7 @@ import MistakesReview from "@/components/MistakesReview";
 import TestCountSelect from "@/components/TestCountSelect";
 import DailyChallenge from "@/components/methods/DailyChallenge";
 import { useSessionProfile } from "@/hooks/useCloudSync";
+import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -73,7 +74,13 @@ function HomePage() {
     const canRestore =
       !!user && !!saved && RESTORABLE.includes(saved) && fallback === "dashboard";
     setViewState(canRestore ? saved! : fallback);
+
+    // Keep the account's email on the profile so progress can be traced back
+    // to the signed-in user.
+    const email = user?.email;
+    if (email && profile.email !== email) persist({ email });
   }, [ready, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   function handleProfile(data: { name: string; gender: "male" | "female"; age: number }) {
     const p = persist({ ...data, onboardedProfile: true });
@@ -107,6 +114,10 @@ function HomePage() {
       </div>
     );
   }
+
+  // Auth-first: everything (AI darslar, lug'at, progress) needs an account.
+  if (!user) return <SignInGate />;
+
 
   return (
     <>
@@ -149,5 +160,48 @@ function HomePage() {
       {view === "mistakes" && <MistakesReview profile={profile} onBack={() => setView("dashboard")} />}
       {view === "daily" && <DailyChallenge profile={profile} onBack={() => { setProfile(loadProfile()); setView("dashboard"); }} />}
     </>
+  );
+}
+
+/** Sign-in wall shown before any learning screen. */
+function SignInGate() {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function signIn() {
+    setBusy(true);
+    setErr(null);
+    try {
+      const r = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (r.error) {
+        setErr(r.error.message);
+        setBusy(false);
+        return;
+      }
+      if (r.redirected) return;
+      window.location.reload();
+    } catch (e) {
+      setErr((e as Error).message);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="card-surface max-w-md w-full p-8 text-center">
+        <div className="w-16 h-16 mx-auto rounded-full gradient-brand flex items-center justify-center text-3xl">🦉</div>
+        <h1 className="mt-4 text-2xl font-bold">Linny ga xush kelibsiz</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Boshlash uchun Google akkauntingiz bilan kiring. Darajangiz, streak, xatolar sandig'i va
+          lug'at rejangiz bulutda saqlanadi — telefon almashtirsangiz ham yo'qolmaydi.
+        </p>
+        <button onClick={signIn} disabled={busy} className="btn-primary mt-6 w-full disabled:opacity-50">
+          {busy ? "Yuklanmoqda..." : "Google bilan kirish"}
+        </button>
+        {err && <div className="mt-3 text-sm text-red-500">{err}</div>}
+      </div>
+    </div>
   );
 }

@@ -10,17 +10,20 @@ import {
   finalizeVocabTest,
   type VocabRow,
 } from "@/lib/vocab.functions";
+import { getVocabConfig, resetVocabBank } from "@/lib/vocabbank.functions";
+import VocabSource from "./VocabSource";
 import type { Profile } from "@/lib/types";
 import { useAuthUser } from "@/hooks/useCloudSync";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+
 
 interface Props {
   profile: Profile;
   onBack: () => void;
 }
 
-type Stage = "home" | "setup" | "learn" | "test" | "favorites" | "result";
+type Stage = "home" | "setup" | "learn" | "test" | "favorites" | "result" | "source";
 
 export default function Vocabulary({ onBack }: Props) {
   const ensure = useServerFn(ensureTodaysWords);
@@ -30,6 +33,8 @@ export default function Vocabulary({ onBack }: Props) {
   const build = useServerFn(buildVocabTest);
   const finalize = useServerFn(finalizeVocabTest);
   const favs = useServerFn(listFavorites);
+  const config = useServerFn(getVocabConfig);
+  const resetBank = useServerFn(resetVocabBank);
 
   const user = useAuthUser();
   const [stage, setStage] = useState<Stage>("home");
@@ -38,16 +43,27 @@ export default function Vocabulary({ onBack }: Props) {
   const [testedToday, setTestedToday] = useState(false);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [bank, setBank] = useState<{ total: number; used: number } | null>(null);
   const started = useRef(false);
 
   async function reload() {
     setLoading(true);
     setErr(null);
     try {
+      // Ask for the learning source before generating anything.
+      const cfg = await config();
+      setDailyCountLocal(cfg.dailyCount);
+      setBank(cfg.bankTotal > 0 ? { total: cfg.bankTotal, used: cfg.bankUsed } : null);
+      if (!cfg.source) {
+        setStage("source");
+        setLoading(false);
+        return;
+      }
       const r = await ensure();
       setWords(r.words);
       setDailyCountLocal(r.dailyCount);
       setTestedToday(r.testedToday);
+      setStage("home");
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -66,6 +82,7 @@ export default function Vocabulary({ onBack }: Props) {
       reload();
     }
   }, [user]); // eslint-disable-line
+
 
   const anyShown = words.some((w) => w.status !== "pending");
   const allWordsIds = words.map((w) => w.id);
@@ -130,7 +147,20 @@ export default function Vocabulary({ onBack }: Props) {
     );
   }
 
+  if (stage === "source") {
+    return (
+      <VocabSource
+        onDone={() => {
+          started.current = true;
+          void reload();
+        }}
+        onBack={onBack}
+      />
+    );
+  }
+
   if (stage === "setup") {
+
     return (
       <SetupScreen
         current={dailyCount}
@@ -209,6 +239,40 @@ export default function Vocabulary({ onBack }: Props) {
           </button>
         </div>
       </div>
+
+      {bank && (
+        <div className="card-surface p-4 mt-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="text-sm">
+              📄 PDF ro'yxatingiz: <b>{bank.used}</b> / {bank.total} so'z o'tildi
+              <span className="text-muted-foreground">
+                {" "}
+                — kuniga {dailyCount} ta bilan ~
+                {Math.ceil((bank.total - bank.used) / Math.max(1, dailyCount))} kun qoldi
+              </span>
+            </div>
+            <button
+              onClick={async () => {
+                if (!confirm("Ro'yxat o'chirilib, manba qaytadan so'raladi. Davom etamizmi?")) return;
+                await resetBank();
+                setBank(null);
+                setStage("source");
+              }}
+              className="btn-ghost text-xs"
+            >
+              Ro'yxatni almashtirish
+            </button>
+          </div>
+          <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full gradient-brand"
+              style={{ width: `${Math.min(100, (bank.used / Math.max(1, bank.total)) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+
 
       <div className="card-surface p-6 mt-6">
         <div className="text-xs uppercase text-muted-foreground">Bugungi vazifa</div>

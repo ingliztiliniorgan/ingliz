@@ -147,7 +147,20 @@ export default function Vocabulary({ onBack }: Props) {
     );
   }
 
+  if (stage === "source") {
+    return (
+      <VocabSource
+        onDone={() => {
+          started.current = true;
+          void reload();
+        }}
+        onBack={onBack}
+      />
+    );
+  }
+
   if (stage === "setup") {
+
     return (
       <SetupScreen
         current={dailyCount}

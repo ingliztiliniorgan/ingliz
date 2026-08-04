@@ -11,7 +11,6 @@ import Translate from "./methods/Translate";
 import Shadowing from "./methods/Shadowing";
 import CodeExplainer from "./methods/CodeExplainer";
 import Vocabulary from "./methods/Vocabulary";
-import RoundUp from "./methods/RoundUp";
 
 interface Props {
   profile: Profile;
@@ -19,11 +18,10 @@ interface Props {
 }
 
 type Method =
-  | "roundup" | "vocab" | "quiz" | "rules" | "skills" | "topics" | "flashcards"
+  | "vocab" | "quiz" | "rules" | "skills" | "topics" | "flashcards"
   | "spelling" | "translate" | "shadowing" | "code";
 
 const methods: { key: Method; title: string; desc: string; emoji: string }[] = [
-  { key: "roundup", title: "New Round-Up (kitob)", desc: "Kitob sahifasini rasmga oling — yechishni o'rgataman", emoji: "📕" },
   { key: "vocab", title: "Lug'at (kunlik)", desc: "Kuniga X so'z — yodlash + test tizimi", emoji: "📚" },
   { key: "quiz", title: "Savollar orqali", desc: "AI umumiy mavzudan turli savollar beradi", emoji: "❓" },
   { key: "rules", title: "Qoidalar bo'yicha", desc: "So'z/qoidani misollar bilan tushuntiradi", emoji: "📘" },
@@ -70,7 +68,6 @@ export default function LearningSession({ profile, onExit }: Props) {
   }
 
   const back = () => setActive(null);
-  if (active === "roundup") return <RoundUp profile={profile} onBack={back} />;
   if (active === "vocab") return <Vocabulary profile={profile} onBack={back} />;
   if (active === "quiz")
     return <AIQuiz profile={profile} askTopic={false} defaultTopic="umumiy ingliz tili" skill="general" title="Savollar orqali" intro="" onBack={back} />;

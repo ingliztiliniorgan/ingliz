@@ -10,10 +10,13 @@ import {
   finalizeVocabTest,
   type VocabRow,
 } from "@/lib/vocab.functions";
+import { getVocabConfig, resetVocabBank } from "@/lib/vocabbank.functions";
+import VocabSource from "./VocabSource";
 import type { Profile } from "@/lib/types";
 import { useAuthUser } from "@/hooks/useCloudSync";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+
 
 interface Props {
   profile: Profile;

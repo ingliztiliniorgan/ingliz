@@ -56,12 +56,6 @@ function AuthPage() {
           {busy ? "Yuklanmoqda..." : "Google bilan kirish"}
         </button>
         {err && <div className="mt-3 text-sm text-red-500">{err}</div>}
-        <button
-          onClick={() => navigate({ to: "/" })}
-          className="mt-4 text-sm text-muted-foreground hover:underline"
-        >
-          Kirmasdan davom etish →
-        </button>
       </div>
     </div>
   );

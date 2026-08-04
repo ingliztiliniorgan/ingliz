@@ -21,6 +21,7 @@ export interface Profile {
   dailyChallengeDate?: string;
   dailyChallengeDone?: boolean;
   lastView?: string;
+  email?: string;
 }
 
 export interface MistakeItem {

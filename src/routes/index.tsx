@@ -73,7 +73,13 @@ function HomePage() {
     const canRestore =
       !!user && !!saved && RESTORABLE.includes(saved) && fallback === "dashboard";
     setViewState(canRestore ? saved! : fallback);
+
+    // Keep the account's email on the profile so progress can be traced back
+    // to the signed-in user.
+    const email = user?.email;
+    if (email && profile.email !== email) persist({ email });
   }, [ready, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   function handleProfile(data: { name: string; gender: "male" | "female"; age: number }) {
     const p = persist({ ...data, onboardedProfile: true });

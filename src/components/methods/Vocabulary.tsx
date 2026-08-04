@@ -20,7 +20,7 @@ interface Props {
   onBack: () => void;
 }
 
-type Stage = "home" | "setup" | "learn" | "test" | "favorites" | "result";
+type Stage = "home" | "setup" | "learn" | "test" | "favorites" | "result" | "source";
 
 export default function Vocabulary({ onBack }: Props) {
   const ensure = useServerFn(ensureTodaysWords);
@@ -30,6 +30,8 @@ export default function Vocabulary({ onBack }: Props) {
   const build = useServerFn(buildVocabTest);
   const finalize = useServerFn(finalizeVocabTest);
   const favs = useServerFn(listFavorites);
+  const config = useServerFn(getVocabConfig);
+  const resetBank = useServerFn(resetVocabBank);
 
   const user = useAuthUser();
   const [stage, setStage] = useState<Stage>("home");
@@ -38,16 +40,27 @@ export default function Vocabulary({ onBack }: Props) {
   const [testedToday, setTestedToday] = useState(false);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [bank, setBank] = useState<{ total: number; used: number } | null>(null);
   const started = useRef(false);
 
   async function reload() {
     setLoading(true);
     setErr(null);
     try {
+      // Ask for the learning source before generating anything.
+      const cfg = await config();
+      setDailyCountLocal(cfg.dailyCount);
+      setBank(cfg.bankTotal > 0 ? { total: cfg.bankTotal, used: cfg.bankUsed } : null);
+      if (!cfg.source) {
+        setStage("source");
+        setLoading(false);
+        return;
+      }
       const r = await ensure();
       setWords(r.words);
       setDailyCountLocal(r.dailyCount);
       setTestedToday(r.testedToday);
+      setStage("home");
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -66,6 +79,7 @@ export default function Vocabulary({ onBack }: Props) {
       reload();
     }
   }, [user]); // eslint-disable-line
+
 
   const anyShown = words.some((w) => w.status !== "pending");
   const allWordsIds = words.map((w) => w.id);

@@ -8,7 +8,7 @@ export const addGeminiKey = createServerFn({ method: "POST" })
     z.object({ apiKey: z.string().min(15).max(400), label: z.string().max(60).optional() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { validateGeminiKey } = await import("./ai-gateway.server");
+    const { validateGeminiKey, invalidateKeyCache } = await import("./ai-gateway.server");
     const apiKey = data.apiKey.trim();
 
     const check = await validateGeminiKey(apiKey);
@@ -25,8 +25,13 @@ export const addGeminiKey = createServerFn({ method: "POST" })
       return { ok: false as const, error: error.message };
     }
 
+    // Make the new key usable straight away: drop the cached key list and every
+    // cooldown, otherwise the pool keeps reporting "limit tugadi" for a while.
+    invalidateKeyCache(apiKey);
+
     return { ok: true as const, already: !!error };
   });
+
 
 export const getKeyPoolInfo = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

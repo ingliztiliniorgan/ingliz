@@ -240,6 +240,40 @@ export default function Vocabulary({ onBack }: Props) {
         </div>
       </div>
 
+      {bank && (
+        <div className="card-surface p-4 mt-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="text-sm">
+              📄 PDF ro'yxatingiz: <b>{bank.used}</b> / {bank.total} so'z o'tildi
+              <span className="text-muted-foreground">
+                {" "}
+                — kuniga {dailyCount} ta bilan ~
+                {Math.ceil((bank.total - bank.used) / Math.max(1, dailyCount))} kun qoldi
+              </span>
+            </div>
+            <button
+              onClick={async () => {
+                if (!confirm("Ro'yxat o'chirilib, manba qaytadan so'raladi. Davom etamizmi?")) return;
+                await resetBank();
+                setBank(null);
+                setStage("source");
+              }}
+              className="btn-ghost text-xs"
+            >
+              Ro'yxatni almashtirish
+            </button>
+          </div>
+          <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full gradient-brand"
+              style={{ width: `${Math.min(100, (bank.used / Math.max(1, bank.total)) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+
+
       <div className="card-surface p-6 mt-6">
         <div className="text-xs uppercase text-muted-foreground">Bugungi vazifa</div>
         <div className="mt-1 text-3xl font-bold">

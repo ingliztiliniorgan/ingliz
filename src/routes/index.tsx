@@ -114,6 +114,10 @@ function HomePage() {
     );
   }
 
+  // Auth-first: everything (AI darslar, lug'at, progress) needs an account.
+  if (!user) return <SignInGate />;
+
+
   return (
     <>
       {view === "onboardProfile" && (

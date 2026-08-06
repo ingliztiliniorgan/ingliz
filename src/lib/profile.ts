@@ -63,3 +63,44 @@ export function mistakesByTag(): Record<string, number> {
   }
   return map;
 }
+
+// --- Kunlik maqsad (local, AI ishlatmaydi) ---------------------------------
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
+/** Bugungi maqsad holati; kun o'zgarsa hisob avtomatik nolga tushadi. */
+export function dailyGoalState() {
+  const p = loadProfile();
+  const fresh = p.goalDate === todayStr();
+  return {
+    goal: p.dailyGoal ?? 10,
+    count: fresh ? (p.goalCount ?? 0) : 0,
+    correct: fresh ? (p.goalCorrect ?? 0) : 0,
+    history: p.goalHistory ?? [],
+  };
+}
+
+export function setDailyGoal(goal: number): Profile {
+  return updateProfile({ dailyGoal: goal });
+}
+
+/** Har bir javobdan keyin chaqiriladi. */
+export function countAnswer(correct: boolean): Profile {
+  const cur = loadProfile();
+  const today = todayStr();
+  const fresh = cur.goalDate === today;
+  const count = (fresh ? cur.goalCount ?? 0 : 0) + 1;
+  const okCount = (fresh ? cur.goalCorrect ?? 0 : 0) + (correct ? 1 : 0);
+
+  const history = [...(cur.goalHistory ?? [])].filter((h) => h.date !== today);
+  history.push({ date: today, count });
+
+  const next: Profile = {
+    ...cur,
+    goalDate: today,
+    goalCount: count,
+    goalCorrect: okCount,
+    goalHistory: history.slice(-14),
+  };
+  saveProfile(next);
+  return next;
+}

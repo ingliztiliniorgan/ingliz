@@ -22,6 +22,11 @@ export interface Profile {
   dailyChallengeDone?: boolean;
   lastView?: string;
   email?: string;
+  dailyGoal?: number;
+  goalDate?: string;
+  goalCount?: number;
+  goalCorrect?: number;
+  goalHistory?: { date: string; count: number }[];
 }
 
 export interface MistakeItem {

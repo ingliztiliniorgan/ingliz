@@ -3,8 +3,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 import { getGateway } from "./ai-gateway.server";
+import { AI_MODEL } from "./ai-model";
 
-const MODEL = "gemini-flash-latest";
+const MODEL = AI_MODEL;
+
 
 const QuestionSchema = z.object({
   q: z.string(),
@@ -65,8 +67,8 @@ export const genQuestions = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }) => {
-    const gw = getGateway();
+  .handler(async ({ data, context }) => {
+    const gw = getGateway(context.userId);
     const skillPrompt =
       data.skill === "vocabulary"
         ? "Ko'proq so'z-tarjima yoki so'z ma'nosini topish savollari."
@@ -111,8 +113,8 @@ export const genFlashcards = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }) => {
-    const gw = getGateway();
+  .handler(async ({ data, context }) => {
+    const gw = getGateway(context.userId);
     const prompt = `Sen ingliz tili muallimisan. Foydalanuvchi: ${ageDescriptor(data.age)}
 Mavzu: "${data.theme}". ${data.count} ta flashcard tayyorla. Har birida:
 - "word": inglizcha so'z
@@ -135,8 +137,8 @@ Faqat JSON: {"items":[...]}`;
 export const genRuleExplanation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ age: z.number().int(), rule: z.string().min(1) }).parse(d))
-  .handler(async ({ data }) => {
-    const gw = getGateway();
+  .handler(async ({ data, context }) => {
+    const gw = getGateway(context.userId);
     const prompt = `Sen ingliz tili muallimisan. Foydalanuvchi: ${ageDescriptor(data.age)}
 "${data.rule}" ni tushuntir. 6-10 ta real hayotdan olingan misollar bilan. Har misolning o'zbekcha tarjimasi bo'lsin.
 
@@ -162,8 +164,8 @@ export const deepExplain = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }) => {
-    const gw = getGateway();
+  .handler(async ({ data, context }) => {
+    const gw = getGateway(context.userId);
     const prompt = `Sen ingliz tili muallimisan. ${ageDescriptor(data.age)}
 Savol: "${data.question}"
 ${data.wrongAnswer ? `Foydalanuvchi javobi: "${data.wrongAnswer}" (noto'g'ri)` : ""}
@@ -203,8 +205,8 @@ export const gradeTranslation = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }) => {
-    const gw = getGateway();
+  .handler(async ({ data, context }) => {
+    const gw = getGateway(context.userId);
     const prompt = `Sen ingliz tili o'qituvchisisan. ${ageDescriptor(data.age)}
 Yo'nalish: ${data.direction === "uz-en" ? "O'zbekchadan Inglizchaga" : "Inglizchadan O'zbekchaga"}
 Manba: "${data.source}"
@@ -239,8 +241,8 @@ export const genTranslateSet = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }) => {
-    const gw = getGateway();
+  .handler(async ({ data, context }) => {
+    const gw = getGateway(context.userId);
     const prompt = `${ageDescriptor(data.age)}
 ${data.count} ta tarjima uchun gap tuz. Mavzu: ${data.topic}.
 Yo'nalish: ${data.direction === "uz-en" ? "o'zbekcha manba, inglizchaga tarjima qilinadi" : "inglizcha manba, o'zbekchaga tarjima qilinadi"}.
@@ -268,8 +270,8 @@ export const genSpellingWords = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }) => {
-    const gw = getGateway();
+  .handler(async ({ data, context }) => {
+    const gw = getGateway(context.userId);
     const prompt = `${ageDescriptor(data.age)}
 ${data.count} ta inglizcha so'z tanlang (mavzu: ${data.topic}). Yozilishi biroz qiyin lekin foydali bo'lsin.
 Har birida: so'z, o'zbekcha ma'nosi, hint (birinchi harf va nechta harf), talaffuz.
@@ -294,9 +296,9 @@ export const explainCodeText = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.object({ input: z.string().min(3), age: z.number().int() }).parse(d),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     try {
-      const gw = getGateway();
+      const gw = getGateway(context.userId);
       const prompt = `${ageDescriptor(data.age)}
 Foydalanuvchi inglizcha matn yoki kod parchasini yubordi. Uni o'zbek tilida tushuntir. Agar kod bo'lsa — nima qilishini, agar matn bo'lsa — mazmunini va notanish so'zlarni tarjima qil.
 
@@ -349,8 +351,8 @@ export const genDailyChallenge = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.object({ age: z.number().int(), level: z.enum(["past", "orta", "yaxshi"]) }).parse(d),
   )
-  .handler(async ({ data }) => {
-    const gw = getGateway();
+  .handler(async ({ data, context }) => {
+    const gw = getGateway(context.userId);
     const prompt = `${ageDescriptor(data.age)} Daraja: ${levelDescriptor(data.level)}
 Bugungi 3 mini vazifa tuz — har xil turdagi qisqa mashqlar (1 ta quiz, 1 ta tarjima, 1 ta so'z-emoji mos qilish).
 JSON: {"tasks":[

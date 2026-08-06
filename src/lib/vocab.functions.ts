@@ -3,8 +3,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { generateText, Output } from "ai";
 import { getGateway } from "./ai-gateway.server";
+import { AI_MODEL } from "./ai-model";
 
-const MODEL = "gemini-flash-latest";
+const MODEL = AI_MODEL;
+
 
 const WordSchema = z.object({
   word: z.string(),
@@ -73,7 +75,7 @@ export const ensureTodaysWords = createServerFn({ method: "POST" })
         .limit(200);
       const seen = new Set((learnedRows ?? []).map((r) => (r.word as string).toLowerCase()));
 
-      const gw = getGateway();
+      const gw = getGateway(userId);
       const Schema = z.object({ items: z.array(WordSchema).min(1).max(30) });
 
       // --- Source 1: the user's own PDF word bank (Oxford list). Words come in

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { genQuestions, deepExplain } from "@/lib/ai.functions";
 import type { Profile } from "@/lib/types";
-import { addMistake } from "@/lib/profile";
+import { addMistake, countAnswer } from "@/lib/profile";
 
 interface AIQ {
   q: string;
@@ -140,6 +140,7 @@ export default function AIQuiz({ profile, defaultTopic, askTopic = true, skill =
     if (i === q.answerIndex) {
       setAnswer(i);
       setCorrect((c) => c + 1);
+      countAnswer(true);
       return;
     }
     // Wrong pick
@@ -147,6 +148,7 @@ export default function AIQuiz({ profile, defaultTopic, askTopic = true, skill =
     setAttempts(newAttempts);
     if (newAttempts >= maxAttempts) {
       setAnswer(i);
+      countAnswer(false);
       addMistake({
         questionId: `ai-${Date.now()}-${idx}`,
         question: q.q,

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { genSpellingWords } from "@/lib/ai.functions";
-import { addMistake } from "@/lib/profile";
+import { addMistake, countAnswer } from "@/lib/profile";
 import type { Profile } from "@/lib/types";
 
 interface Props {
@@ -55,6 +55,7 @@ export default function Spelling({ profile, onBack }: Props) {
     if (!items[idx]) return;
     const ok = input.trim().toLowerCase() === items[idx].word.toLowerCase();
     setFeedback(ok ? "right" : "wrong");
+    countAnswer(ok);
     if (ok) setScore((s) => s + 1);
     else
       addMistake({

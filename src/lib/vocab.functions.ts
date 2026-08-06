@@ -3,8 +3,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { generateText, Output } from "ai";
 import { getGateway } from "./ai-gateway.server";
+import { AI_MODEL } from "./ai-model";
 
-const MODEL = "gemini-flash-latest";
+const MODEL = AI_MODEL;
+
 
 const WordSchema = z.object({
   word: z.string(),

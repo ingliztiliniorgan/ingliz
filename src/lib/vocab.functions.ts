@@ -75,7 +75,7 @@ export const ensureTodaysWords = createServerFn({ method: "POST" })
         .limit(200);
       const seen = new Set((learnedRows ?? []).map((r) => (r.word as string).toLowerCase()));
 
-      const gw = getGateway();
+      const gw = getGateway(userId);
       const Schema = z.object({ items: z.array(WordSchema).min(1).max(30) });
 
       // --- Source 1: the user's own PDF word bank (Oxford list). Words come in

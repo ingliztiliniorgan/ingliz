@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthUser } from "@/hooks/useCloudSync";
 import { useNavigate } from "@tanstack/react-router";
 import { openApiKeyDialog } from "@/components/ApiKeyDialog";
+import DailyGoalCard from "@/components/DailyGoalCard";
 
 interface Props {
   profile: Profile;
@@ -132,6 +133,8 @@ export default function Dashboard({ profile, onStartLearning, onOpenMistakes, on
           </div>
         </section>
       )}
+
+      <DailyGoalCard />
 
       <section className="mt-6 grid md:grid-cols-2 gap-4">
         <div className="card-surface p-6 md:p-7">
